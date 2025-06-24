@@ -2,6 +2,8 @@
 
 ### Introduction
 
+---
+
 * **Objective:** Develop a responsive web application that visualizes road closure data sourced from the Kentucky Department of Highways.
 * **Tools and Technologies:** HTML, CSS (Grid, Flexbox, Media Queries), JavaScript, and Apache eCharts.
 * **Goals:**
@@ -9,6 +11,8 @@
   - Enable dynamic filtering and exploration of closure data by district and year.
 
 ### Responsive Design
+
+---
 
 **Implementation**
    * Employ CSS Grid and/or Flexbox for flexible, adaptive layouts.
@@ -27,6 +31,8 @@
 
 ### Data Handling and Analysis
 
+---
+
 **Data Storage and Retrieval**
    * Store closure data in structured formats (JSON, arrays, or objects).
    * Implement efficient data retrieval and update mechanisms for filtering and visualization.
@@ -40,6 +46,8 @@
 
 ### Advanced Features (Optional)
 
+---
+
 **User Interaction**
    * Add forms or controls for custom filtering (e.g., by date range or county).
 
@@ -47,6 +55,8 @@
    * Allow users to export filtered data or charts as images or CSV files.
 
 ### Project Development
+
+---
 
 **Backend Integration**
    * Implement API to reprocess location information using KYTC Geo API.
@@ -57,6 +67,8 @@
 
 ### Review Process
 
+---
+
 **Internal Testing**
    * Test all dashboard features for accuracy, responsiveness, and usability.
    * Validate data filtering and visualization updates.
@@ -65,6 +77,8 @@
    * Gather feedback from users or stakeholders and iterate on the design and features.
 
 ### Documentation and Final Submission
+
+---
 
 **Code Documentation**
    * Comment code for clarity and maintainability.
