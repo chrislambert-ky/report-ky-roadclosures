@@ -20,6 +20,7 @@
    * Store and manage road closure data using arrays, objects, or appropriate data structures.
    * Visualize data with interactive charts (e.g., closures per district, closures per year, top 10 counties, and a map view).
    * Integrate dropdown filters for district and year selection to update visualizations dynamically.
+
 **Data Integration**
    * Use your existing Python project to fetch and preprocess road closure data.
    * Serve the processed data to the frontend via an API endpoint.
@@ -29,6 +30,7 @@
 **Data Storage and Retrieval**
    * Store closure data in structured formats (JSON, arrays, or objects).
    * Implement efficient data retrieval and update mechanisms for filtering and visualization.
+
 **Data Visualization**
    * Use Apache ECharts to create interactive visualizations:
      * Number of closures per district
@@ -40,6 +42,7 @@
 
 **User Interaction**
    * Add forms or controls for custom filtering (e.g., by date range or county).
+
 **Data Export/Sharing**
    * Allow users to export filtered data or charts as images or CSV files.
 
@@ -47,6 +50,7 @@
 
 **Backend Integration**
    * Implement API to reprocess location information using KYTC Geo API.
+
 **Frontend Development**
    * Build the dashboard interface using modern JavaScript and ECharts.
    * Ensure seamless communication between frontend and backend.
@@ -56,6 +60,7 @@
 **Internal Testing**
    * Test all dashboard features for accuracy, responsiveness, and usability.
    * Validate data filtering and visualization updates.
+
 **External Feedback**
    * Gather feedback from users or stakeholders and iterate on the design and features.
 
@@ -68,5 +73,6 @@
      * Setup and installation instructions
      * Usage guidelines and feature descriptions
      * Data source and API integration details
+
 **Final Submission**
    * Ensure the dashboard is fully functional, well-documented, and ready for presentation or deployment.
