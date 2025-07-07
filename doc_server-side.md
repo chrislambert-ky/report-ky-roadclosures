@@ -1,4 +1,4 @@
-# Server-side Docs:  Interactive Business Intelligence Report for Road Closures
+# Server-side Docs:  Interactive Report for Road Closures
 
 1. Pull historic data from the source by perform a fetch using the GitHub API:
 - [Hosted CSV Data Source](https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv)

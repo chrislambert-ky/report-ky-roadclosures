@@ -1,4 +1,4 @@
-# Project Outline: Interactive Business Intelligence Report for Road Closures
+# Project Outline: Interactive Report for Road Closures
 
 ## Introduction
 
