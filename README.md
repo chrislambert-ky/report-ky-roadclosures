@@ -2,30 +2,30 @@
 
 ## Introduction
 
-**Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the Kentucky Department of Highways.  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet spatial API, and then produce an interactive, responsive, website that provides business intelligence capabilities.
+**Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the Kentucky Transportation Cabinet.  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet spatial API, and then produce an interactive, responsive, website that provides business intelligence capabilities.
+
+**Objective:**
+  - Retrieve historic road closure data.
+  - Reprocess historic data with updated roadway attributes.
+  - Develop user-friendly, interactive dashboard(s) to quantify closures.
+  - Develop filtering for users to focus and explore closure data.
 
 **Tools and Technologies:** 
 - [Node.js](https://nodejs.org/en)
 - [GitHub API](https://docs.github.com/en/rest/using-the-rest-api)
 - [Geospatial API provided by KYTC](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs)
 - [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) / [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) / [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-- [Apache eCharts](https://echarts.apache.org/en/index.html) or [Plotly Javascript Library](https://plotly.com/javascript/)
-- Based on data from [chrislambert-ky/analysis-ky-roadclosure](https://github.com/chrislambert-ky/analysis-ky-roadclosures)
+- [Apache eCharts](https://echarts.apache.org/en/index.html) and/or [Plotly Javascript Library](https://plotly.com/javascript/)
 
-**Objective:**
-  - Reprocess historic road closure data with the latest roadway attributes.
-  - Implement a user-friendly, interactive dashboard for business intelligence.
-  - Enable dynamic filtering and exploration of closure data by district and year.
 
-### Responsive Design
 
----
+# Responsive Design
 
 **Implementation**
    * Employ CSS Grid and/or Flexbox for flexible, adaptive layouts.
    * Ensure all dashboard components (charts, dropdowns, maps) are responsive.
 
-### Feature Implementation
+# Feature Implementation
 
 **Core Features**
    * Store and manage road closure data using arrays, objects, or appropriate data structures.
@@ -36,9 +36,7 @@
    * Use your existing Python project to fetch and preprocess road closure data.
    * Serve the processed data to the frontend via an API endpoint.
 
-### Data Handling and Analysis
-
----
+# Data Handling and Analysis
 
 **Data Storage and Retrieval**
    * Store closure data in structured formats (JSON, arrays, or objects).
@@ -51,9 +49,7 @@
      * Top 10 counties with closures
      * (Optional) Map visualization of closure locations
 
-### Advanced Features (Optional)
-
----
+# Advanced Features (Optional)
 
 **User Interaction**
    * Add forms or controls for custom filtering (e.g., by date range or county).
@@ -61,9 +57,7 @@
 **Data Export/Sharing**
    * Allow users to export filtered data or charts as images or CSV files.
 
-### Project Development
-
----
+# Project Development
 
 **Backend Integration**
    * Implement API to reprocess location information using KYTC Geo API.
@@ -72,9 +66,7 @@
    * Build the dashboard interface using modern JavaScript and ECharts.
    * Ensure seamless communication between frontend and backend.
 
-### Review Process
-
----
+# Review Process
 
 **Internal Testing**
    * Test all dashboard features for accuracy, responsiveness, and usability.
@@ -83,9 +75,7 @@
 **External Feedback**
    * Gather feedback from users or stakeholders and iterate on the design and features.
 
-### Documentation and Final Submission
-
----
+# Documentation and Final Submission
 
 **Code Documentation**
    * Comment code for clarity and maintainability.

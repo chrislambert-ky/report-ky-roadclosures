@@ -1,6 +1,6 @@
 # Data Dictionary
 
-- The following files have been included to help explore and explain the data:
+- The following offline files have been included to help explore and help explain the data:
     - docs_js/github_csv_source_schema.json
     - docs_js/github_csv_source_schema.csv
     - docs_js/github_csv_local_copy_kytc-closures-2021-2025-report_dataset.csv
