@@ -23,7 +23,7 @@ async function main()
   const filteredRows = filterRows(csvText);
   
   // I need to write the filtered rows to a JSON file.
-  fs.writeFileSync('csv_base_data.json', JSON.stringify(filteredRows, null, 2));
+  fs.writeFileSync('./data/csv_base_data.json', JSON.stringify(filteredRows, null, 2));
   console.log(`Wrote ${filteredRows.length} records to csv_base_data.json`);
 }
 
