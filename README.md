@@ -22,15 +22,15 @@ This document started as a project outline but I'm updating the document as a I 
 ### Core Features:
 
    **Back-End / server-side processes:**
-   - Fetch historic CSV formatted data using **GitHub API**
-   - Parse CSV and store the dataset as JSON.
-   - Filter dataset for unique values:
+   - **(complete)** Fetch historic CSV formatted data using **GitHub API**
+   - **(complete)** Parse CSV and store the dataset as JSON.
+   - **(complete)** Filter dataset for unique values:
       - Latitude
       - Longitude
       - Comment
       - Reported On
       - Duration
-   - Process filtered data using **KYTC API** and add the following updated attributes:
+   - Process filtered dataset using **KYTC API** and add the following updated attributes:
       - District
       - County
       - Route
