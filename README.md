@@ -40,14 +40,14 @@ This document started as a project outline but I'm updating the document as a I 
    **User Interface:**
    - Responsive Design
    - Visualize data with Apache ECHARTS
-      - Geo Page:
+      - By Count Page:
          - Provide dynamic filter for District
          - Provide dynamic filter for Year
          - Count of Closures per District
          - Count of Closures per Year
          - Count of Closures per County
          - Count of Closures per Route
-      - Duration Page:
+      - By Duration Page:
          - Provide dynamic filter for District
          - Provide dynamic filter for Year
          - Total Duration of Closures (hours) per District
