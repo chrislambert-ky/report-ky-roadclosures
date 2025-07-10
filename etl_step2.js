@@ -23,9 +23,10 @@
 // This script is co-written by GitHub CoPilot, GPT 4.1 using the autocomplete feature.
 
 // I'm going to break down my ETLs into steps for my own peace of mind.
-// Step 1: Fetch data from CSV source and save it to 'data_full_dataset.json'.
-// Step 2: Fetch, parse out the minimum fields, and save to 'data_parsed_data.json'.
-// Step 3: Fetch, parse, and geo-enrich using the KYTC API, and store as 'data_reportready_dataset.json'.
+// Step 1: Fetch data from CSV source, parse as JSON, and save it to 'data_v1_full_dataset.json'.
+// Step 2: Fetch, parse, and filter fields, and save to 'data_v2_parsed_filtered_data.json'.
+// Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as 'data_v3_reprocessed_dataset.json'.
+// Step 4: Fetch, parse, filter, reprocess, log etl results, and store the data for final output as 'data_v4_final_roadclosures.json'.
 
 // Import necessary modules.  This is similar to Python's import statement.
 import fetch from 'node-fetch';
