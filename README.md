@@ -6,7 +6,7 @@ This document started as a project outline but I'm updating the document as a I 
 **Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the Kentucky Transportation Cabinet.  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet spatial API, and then produce an interactive, responsive, website that provides business intelligence capabilities.
 
 **Objective:**
-  - **(COMPLETE)** Retrieve historic road closure data. 
+  - Retrieve historic road closure data. 
   - Reprocess historic data with updated roadway attributes.
   - Develop user-friendly, interactive dashboard(s) to quantify closures.
   - Develop filtering for users to focus and explore closure data.
@@ -30,15 +30,16 @@ This document started as a project outline but I'm updating the document as a I 
       - Comment
       - Reported On
       - Duration
-   - Process filtered dataset using **KYTC API** and add the following updated attributes:
+   - **(complete)** Reprocess filtered dataset using **KYTC API** and add the following updated attributes:
       - District
       - County
       - Route
       - Road Name
       - Mile Point
 
-   **User Interface:**
-   - Responsive Design
+   **Web Design: Interactive Dashboards:**
+   - Develop site for responsive design.
+   - Utilize standard CSS throughout development.
    - Visualize data with Apache ECHARTS
       - By Count Page:
          - Provide dynamic filter for District
@@ -89,41 +90,41 @@ All of the following items are still under development.
    - Ensure all dashboard components (charts, dropdowns, maps) are responsive.
 
 **Data Visualization**
-   * Use Apache ECharts to create interactive visualizations:
-     * Number of closures per district
-     * Number of closures per year
-     * Top 10 counties with closures
-     * (Optional) Map visualization of closure locations
+   - Use Apache ECharts to create interactive visualizations:
+     - Number of closures per district
+     - Number of closures per year
+     - Top 10 counties with closures
+     - (Optional) Map visualization of closure locations
 
 ## Advanced Features (Optional)
 
 **User Interaction**
-   * Add forms or controls for custom filtering (e.g., by date range or county).
+   - Add forms or controls for custom filtering (e.g., by date range or county).
 
 **Data Export/Sharing**
-   * Allow users to export filtered data or charts as images or CSV files.
+   - Allow users to export filtered data or charts as images or CSV files.
 
 **Backend Integration**
-   * Implement API to reprocess location information using KYTC Geo API.
+   - Implement API to reprocess location information using KYTC Geo API.
 
 **Frontend Development**
-   * Build the dashboard interface using modern JavaScript and ECharts.
-   * Ensure seamless communication between frontend and backend.
+   - Build the dashboard interface using modern JavaScript and ECharts.
+   - Ensure seamless communication between frontend and backend.
 
 **Internal Testing**
-   * Test all dashboard features for accuracy, responsiveness, and usability.
-   * Validate data filtering and visualization updates.
+   - Test all dashboard features for accuracy, responsiveness, and usability.
+   - Validate data filtering and visualization updates.
 
 **External Feedback**
-   * Gather feedback from users or stakeholders and iterate on the design and features.
+   - Gather feedback from users or stakeholders and iterate on the design and features.
 
 **Code Documentation**
-   * Comment code for clarity and maintainability.
-   * Prepare a comprehensive README.md with:
-     * Project overview and objectives
-     * Setup and installation instructions
-     * Usage guidelines and feature descriptions
-     * Data source and API integration details
+   - Comment code for clarity and maintainability.
+   - Prepare a comprehensive README.md with:
+     - Project overview and objectives
+     - Setup and installation instructions
+     - Usage guidelines and feature descriptions
+     - Data source and API integration details
 
 **Final Submission**
-   * Ensure the dashboard is fully functional, well-documented, and ready for presentation or deployment.
+   - Ensure the dashboard is fully functional, well-documented, and ready for presentation or deployment.
