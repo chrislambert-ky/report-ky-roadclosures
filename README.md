@@ -80,8 +80,8 @@ This document started as a project outline but I'm updating the document as a I 
 All of the following items are still under development.
 
 **Data Retrieval, Storage, and Integration**
-   - Add reprocessing to the ETL pipeline process by leveraging the KYTC API
-   - Automate and schedule the pipeline using GitHub Actions so the report data is always updated.
+   - Add reprocessing to the ETL pipeline process by leveraging the KYTC API.  This allows people to analyze historic road closure data using the most recent road names and mile points.
+   - Automate and schedule the data pipeline using GitHub Actions so the report is always displaying current data.  This is redundant if the user runs clones the repo and runs the bash command but it will be needed for the hosted version.
 
 **Implementation**
    - Employ CSS Grid and/or Flexbox for flexible, adaptive layouts.
