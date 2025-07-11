@@ -1,9 +1,12 @@
+
+
 /* Road Closure Style Guide:
 This is a modified, more comprehensive version of the style guide provided to me 
 for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/) 
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
 */
+
 
 /* Fonts */
 body, html 
@@ -132,7 +135,8 @@ body, html
 
  
 
-@media (max-width: 600px) {
+@media (max-width: 600px) 
+{
   .chart-container 
   {
     padding: 0.5rem 0.25rem;
@@ -224,3 +228,4 @@ body, html
   margin: 1rem 0;
   text-align: center;
 }
+
