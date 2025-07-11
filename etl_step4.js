@@ -1,4 +1,12 @@
+
+// DOCUMENTATION:
+
+// This script was first documented by me and then I prompted GitHub Copilot
+// to add comments so that others can better understand the ETL process and use this 
+// script as a learning tool (not to mention reminding me how it works once I've walked away).
+
 // NOTES:
+
 // This script aims to reprocess historic road closure data for analysis and reporting purposes.
 // This ETL data will eventually support the Dashboards that are the main focus of this project.
 // This particular script attempts to handle my ETL (extract, transform, and load) process.
@@ -7,8 +15,8 @@
 // Since roadway information changes over time, I need to re-process the data with more recent attributes.
 // I want to ensure that people can review historic data in the most recent context.
 
-
 // DISCLAIMERS:
+
 // I do work for the Kentucky Transportation Cabinet but this is not an official KYTC project.
 // This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc)
 
@@ -27,7 +35,7 @@
 // Step 2: Fetch, parse, and filter fields, and save to 'data_v2_parsed_filtered_data.json'.
 // Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as 'data_v3_reprocessed_dataset.json'.
 // Step 4: Fetch, parse, filter, reprocess, log etl results, and store the data for final output as 'data_v4_final_roadclosures.json'.
-// Step 5: DOCUMENTATION: This script was documented by myself and then GitHub Copilot to help others understand the ETL process and how to use it.
+
 
 // =========================
 // ETL PIPELINE OVERVIEW
@@ -213,7 +221,7 @@ async function processBatch(batch, batchStartIdx)
   // The following block demonstrates how to write results to a file in JSON format,
   // and how to print progress and sample output for debugging and learning purposes.
 
-  // The API seemed to lock up if I sent too many requests at once.
+// The API seemed to lock up if I sent too many requests at once.
 // This function will handle the enrichment of each row in the batch
 // Using Promise.all to handle concurrency
 {
