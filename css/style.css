@@ -282,3 +282,20 @@ body, html
   }
 }
 
+/* About Page  */
+
+
+section 
+{
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: background 0.2s;
+}
+
+section:hover 
+{
+  background-color: var(--light-gray);
+}
