@@ -81,12 +81,12 @@ This document started as a project outline but I'm updating the document as a I 
 - Node.js v18 or newer is recommended.
 - Internet connection is required to fetch source data and call the KYTC API.
 
-# Under Development
-All of the following items are still under development.
-
 **Data Retrieval, Storage, and Integration**
    - Add reprocessing to the ETL pipeline process by leveraging the KYTC API.  This allows people to analyze historic road closure data using the most recent road names and mile points.
    - Automate and schedule the data pipeline using GitHub Actions so the report is always displaying current data.  This is redundant if the user runs clones the repo and runs the bash command but it will be needed for the hosted version.
+
+# Under Development
+All of the following items are still under development.
 
 **Implementation**
    - Employ CSS Grid and/or Flexbox for flexible, adaptive layouts.
