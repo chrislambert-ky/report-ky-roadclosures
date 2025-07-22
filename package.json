@@ -3,5 +3,24 @@
   "dependencies": {
     "csv-parse": "^5.6.0",
     "node-fetch": "^2.7.0"
-  }
+  },
+  "name": "report-ky-roadclosures",
+  "version": "1.0.0",
+  "description": "This document started as a project outline but I'm updating the document as a I complete work on the project.",
+  "main": "etl_data.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrislambert-ky/report-ky-roadclosures.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chrislambert-ky/report-ky-roadclosures/issues"
+  },
+  "homepage": "https://github.com/chrislambert-ky/report-ky-roadclosures#readme"
 }
