@@ -10,6 +10,7 @@
   "main": "etl_data.js",
   "devDependencies": {},
   "scripts": {
+    "start": "node etl_data.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
