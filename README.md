@@ -15,9 +15,9 @@ This document started as a project outline but I'm updating the document as a I 
 - [Node.js](https://nodejs.org/en)
 - [GitHub API](https://docs.github.com/en/rest/using-the-rest-api)
 - [Geospatial API provided by KYTC](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs)
-- [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) / [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) / 
-- [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+- [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) / [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) / [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 - [Apache eCharts](https://echarts.apache.org/en/index.html) and/or [Plotly Javascript Library](https://plotly.com/javascript/)
+- [Leaflet](https://leafletjs.com/)
 
 ### Core Features:
 
