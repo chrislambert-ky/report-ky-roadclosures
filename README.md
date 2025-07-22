@@ -70,12 +70,16 @@ This document started as a project outline but I'm updating the document as a I 
    npm install
    ```
 
-3. **Run Backend Data Scripts**
-   - To fetch, process, and export road closure data, use:
+3. **Run the ETL Pipeline**
+   - To fetch, process, enrich, and export road closure data, use:
      ```bash
-     node etl_step1.js
+     npm start
      ```
-   - This will generate a `./data/data_v1_full_dataset.json` file which contains the base data to be reprocessed in an upcoming step.
+   - This will execute `etl_data.js` and generate a `./data/data_v4_final_roadclosures.json` file containing the fully processed and enriched dataset.
+
+**Requirements:**
+- Node.js v18 or newer is recommended.
+- Internet connection is required to fetch source data and call the KYTC API.
 
 # Under Development
 All of the following items are still under development.
