@@ -5,18 +5,7 @@ I like the clean, modern look and feel of the dashboard
 and wanted to use it as a base for my personal projects.
 */
 
-
-/* Fonts */
-body, html 
-{
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #fff;
-  color: #000;
-  margin: 0;
-  padding: 0;
-}
-
-/* Color Palette */
+/* These are my primary colors */
 :root 
 {
   --blue: #003764;
@@ -32,199 +21,86 @@ body, html
   --dark-gray: #595959;
 }
 
- 
 
-/* Typography */
-
-.dashboard-title 
+/* I want to use Arial as my primary font */
+body, html 
 {
-  font-size: 1.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: var(--blue);
-  text-align: center;
-  margin: 1.5rem 0 0.5rem 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #fff;
+  color: #000;
+  margin: 0;
+  padding: 0;
 }
 
- 
 
-.dashboard-subheader 
-{
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--blue);
-  text-align: center;
-  margin-bottom: 1rem;
-  text-transform: capitalize;
+/* Image Grid Styles */
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  justify-items: center;
+  align-items: center;
+  margin: 3rem auto;
+  max-width: 1000px;
 }
 
- 
-
-.chart-label, .axis-label 
-{
-  font-size: 1rem;
-  color: var(--gray);
-  font-weight: normal;
-  text-transform: capitalize;
-}
-
- 
-
-.data-label 
-{
-  font-size: 1rem;
-  color: var(--dark-gray);
-  text-transform: capitalize;
-}
-
- 
-
-.legend-label, .popup-label 
-{
-  font-size: 1rem;
-  color: var(--black);
-  text-transform: capitalize;
-}
-
- 
-
-.chart-data 
-{
-  font-size: 1.25rem;
-  color: #fff;
-  font-weight: bold;
-}
-
- 
-
-/* Chart Container */
-
-.chart-container 
-{
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto 2rem auto;
+.image-grid a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: var(--light-gray);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
+  text-decoration: none;
+  transition: background 0.2s, box-shadow 0.2s;
+  width: 180px;
+  height: 220px;
+  justify-content: center;
 }
 
- 
+.image-grid a:hover {
+  background: var(--light-gray);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
 
-/* Responsive Layout */
+.image-grid img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
 
-@media (max-width: 900px) 
-{
-  .chart-container 
-  {
-    max-width: 100%;
+.image-grid p {
+  color: var(--blue);
+  font-weight: bold;
+  text-align: center;
+  font-size: 1rem;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .image-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .image-grid a {
+    width: 90vw;
+    height: 180px;
     padding: 1rem 0.5rem;
   }
-  .dashboard-title 
-  {
-    font-size: 1.25rem;
+  .image-grid img {
+    width: 60px;
+    height: 60px;
   }
-  .dashboard-subheader 
-  {
-    font-size: 1rem;
-  }
-}
-
- 
-
-@media (max-width: 600px) 
-{
-  .chart-container 
-  {
-    padding: 0.5rem 0.25rem;
-  }
-  .dashboard-title 
-  {
-    font-size: 1rem;
-  }
-  .dashboard-subheader 
-  {
-    font-size: 0.9rem;
-  }
-  .chart-label, .axis-label, .data-label, .legend-label, .popup-label 
-  {
-    font-size: 0.9rem;
-  }
-}
-
- 
-
-/* Chart Color Classes for Cycling */
-.bar-color-1 { background-color: var(--light-blue); border-color: var(--light-blue); }
-.bar-color-2 { background-color: var(--golden-yellow); border-color: var(--golden-yellow); }
-.bar-color-3 { background-color: var(--bright-green); border-color: var(--bright-green); }
-.bar-color-4 { background-color: var(--blue); border-color: var(--blue); }
-.bar-color-5 { background-color: var(--orange); border-color: var(--orange); }
-.bar-color-6 { background-color: var(--purple); border-color: var(--purple); }
-
-.doughnut-color-1 { background-color: var(--light-blue); }
-.doughnut-color-2 { background-color: var(--golden-yellow); }
-.doughnut-color-3 { background-color: var(--bright-green); }
-.doughnut-color-4 { background-color: var(--blue); }
-.doughnut-outline { border: 2px solid var(--black); }
-
-/* Line Graph Colors */
-.line-color-1 { stroke: var(--light-blue); }
-.line-color-2 { stroke: var(--golden-yellow); }
-.line-color-3 { stroke: var(--bright-green); }
-.line-color-4 { stroke: var(--blue); }
-
-/* Utility Classes */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-left { text-align: left; }
-.font-bold { font-weight: bold; }
-.font-normal { font-weight: normal; }
-.uppercase { text-transform: uppercase; }
-.capitalize { text-transform: capitalize; }
-
-/* Number Formatting (for JS, not CSS) */
-
-/* Use JS to format numbers with commas and percentages as needed */
-
-/* Miscellaneous */
-
-.popup-box 
-{
-  background: var(--gray);
-  color: var(--black);
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
-}
-
-.legend 
-{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.legend-item 
-{
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-}
-
-
-/* Home/Category Messaging */
-
-.dashboard-message 
-{
-  font-size: 1.1rem;
-  color: var(--dark-gray);
-  margin: 1rem 0;
-  text-align: center;
 }
 
 /* Navigation Bar Styles */
@@ -254,11 +130,7 @@ body, html
   text-decoration: none;
 }
 
-/* Remove the pipe separator for a cleaner look */
-.main-nav .nav-link + .nav-link::before {
-  content: "";
-}
-
+/* Responsive Navigation Bar */
 @media (max-width: 700px) {
   .main-nav {
     flex-direction: column;
@@ -280,22 +152,4 @@ body, html
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
   }
-}
-
-/* About Page  */
-
-
-section 
-{
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1.5rem 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: background 0.2s;
-}
-
-section:hover 
-{
-  background-color: var(--light-gray);
 }
