@@ -32,6 +32,12 @@ body, html
   padding: 0;
 }
 
+section {
+  padding: 1rem;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
 /* Navigation Bar Styles */
 .main-nav {
   background: var(--light-gray);

@@ -35,7 +35,8 @@ body, html
 
 /* Image Grid Styles */
 
-.image-grid {
+.image-grid 
+{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
@@ -45,7 +46,8 @@ body, html
   max-width: 1000px;
 }
 
-.image-grid a {
+.image-grid a 
+{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,19 +62,22 @@ body, html
   justify-content: center;
 }
 
-.image-grid a:hover {
+.image-grid a:hover 
+{
   background: var(--light-gray);
   box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
 
-.image-grid img {
+.image-grid img 
+{
   width: 80px;
   height: 80px;
   object-fit: contain;
   margin-bottom: 1rem;
 }
 
-.image-grid p {
+.image-grid p 
+{
   color: var(--blue);
   font-weight: bold;
   text-align: center;
@@ -80,31 +85,37 @@ body, html
   margin: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 900px) 
+{
   .image-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
 }
 
-@media (max-width: 600px) {
-  .image-grid {
+@media (max-width: 600px) 
+{
+  .image-grid 
+  {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  .image-grid a {
+  .image-grid a 
+  {
     width: 90vw;
     height: 180px;
     padding: 1rem 0.5rem;
   }
-  .image-grid img {
+  .image-grid img 
+  {
     width: 60px;
     height: 60px;
   }
 }
 
 /* Navigation Bar Styles */
-.main-nav {
+.main-nav 
+{
   background: var(--light-gray);
   padding: 1rem 0;
   display: flex;
@@ -113,7 +124,8 @@ body, html
   border-bottom: 2px solid var(--blue);
 }
 
-.main-nav .nav-link {
+.main-nav .nav-link 
+{
   color: var(--blue);
   text-decoration: none;
   font-weight: bold;
@@ -124,21 +136,25 @@ body, html
 }
 
 .main-nav .nav-link:hover,
-.main-nav .nav-link:focus {
+.main-nav .nav-link:focus 
+{
   background: var(--blue);
   color: #fff;
   text-decoration: none;
 }
 
 /* Responsive Navigation Bar */
-@media (max-width: 700px) {
-  .main-nav {
+@media (max-width: 700px) 
+{
+  .main-nav 
+  {
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
   }
-  .main-nav .nav-link {
+  .main-nav .nav-link 
+  {
     font-size: 1rem;
     padding: 0.5rem 1rem;
     width: 100%;
@@ -147,8 +163,10 @@ body, html
   }
 }
 
-@media (max-width: 400px) {
-  .main-nav .nav-link {
+@media (max-width: 400px) 
+{
+  .main-nav .nav-link 
+  {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
   }
