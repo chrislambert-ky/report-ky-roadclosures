@@ -33,26 +33,29 @@
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
 <script>
-// =============================
-// Leaflet Map Initialization
-// =============================
-// This script sets up a Leaflet map, loads road closure data from a JSON file,
-// and displays each closure as a marker using clustering for performance and usability.
-// The clustering is handled by the Leaflet.markercluster plugin, which groups nearby markers.
 
-// 1. Create the map and set the initial view to Kentucky
+// Leaflet Map
+// =============================
+// The following Leaflet map is based on their Quick Start example.
+// I just had to fetch my data and start customizing the content.
+// The performance was horrible with 10,000+ markers, so I used the Leaflet.markercluster plugin.
+// They have a lot of documentation at: https://leafletjs.com/reference.html
+// Clustering docs can be found here: https://github.com/Leaflet/Leaflet.markercluster
+
+
+// Create the map and set the initial view to Kentucky
 const map = L.map('map').setView([37.822295, -85.76819], 7); // Centered on Kentucky
 
-// 2. Add OpenStreetMap tiles as the base map layer
+// Add OpenStreetMap tiles as the base map layer (example default)
 const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-// 3. Create a marker cluster group to efficiently display thousands of points
+// Create a marker cluster group to efficiently display thousands of points
 const markers = L.markerClusterGroup({
     maxClusterRadius: 60, // default is 80, lower = tighter clusters
-    disableClusteringAtZoom: 12 // clusters break apart at zoom 12+
+    disableClusteringAtZoom: 12 // clusters disappear at zoom 12
 });
 // 4. Fetch the road closure data from the JSON file
 fetch('../data/data_v4_final_roadclosures.json')
@@ -60,14 +63,14 @@ fetch('../data/data_v4_final_roadclosures.json')
   .then(data => {
     // Loop through each closure record in the dataset
     data.forEach(closure => {
-      // Only add a marker if both latitude and longitude are present
+      // Look for laitude and longitude fields in the closure record
       if (closure.latitude && closure.longitude) {
         // Create a marker for the closure location
         const marker = L.marker([
           parseFloat(closure.latitude),
           parseFloat(closure.longitude)
         ]);
-        // Bind a popup to the marker with closure details
+        // Popup settings
         marker.bindPopup(
           `<b>${closure.Road_Name || closure.Route || 'Unknown Road'}</b><br>
            ${closure.Comments || ''}<br>
@@ -86,9 +89,7 @@ fetch('../data/data_v4_final_roadclosures.json')
     // Log any errors that occur during fetch or processing
     console.error('Error fetching or displaying road closures data:', error);
   });
-// =============================
-// End of Map Script
-// =============================
+
 </script>
 
 
