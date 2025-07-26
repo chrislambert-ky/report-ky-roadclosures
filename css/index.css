@@ -32,6 +32,22 @@ body, html
   padding: 0;
 }
 
+h1
+{
+  font-size: 2.1rem;
+  font-weight: bold;
+  color: var(--blue);
+  margin: 1rem 0;
+  text-align: center;
+}
+h2
+{
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--light-blue);
+  margin: 0.5rem 0;
+  text-align: center;
+}
 
 /* Image Grid Styles */
 
