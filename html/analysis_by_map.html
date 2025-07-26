@@ -44,7 +44,20 @@
 	const marker = L.marker([37.822295,-85.76819]).addTo(map)
 		.bindPopup('<b>Hello world!</b><br />I am a popup.').openPopup();
 
-	// const circle = L.circle([51.508, -0.11], 
+
+	function onMapClick(e) {
+		popup
+			.setLatLng(e.latlng)
+			.setContent(`You clicked the map at ${e.latlng.toString()}`)
+			.openOn(map);
+	}
+
+	map.on('click', onMapClick);
+
+
+	// Unneeded features from the example code 
+
+	// const circle = L.circle([37.822295,-85.76819], 
 	// {
 	// 	color: 'red',
 	// 	fillColor: '#f03',
@@ -64,16 +77,6 @@
 	// 	.setLatLng([51.513, -0.09])
 	// 	.setContent('I am a standalone popup.')
 	// 	.openOn(map);
-
-	function onMapClick(e) {
-		popup
-			.setLatLng(e.latlng)
-			.setContent(`You clicked the map at ${e.latlng.toString()}`)
-			.openOn(map);
-	}
-
-	map.on('click', onMapClick);
-
 </script>
 
 
