@@ -50,8 +50,10 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // 3. Create a marker cluster group to efficiently display thousands of points
-const markers = L.markerClusterGroup();
-
+const markers = L.markerClusterGroup({
+    maxClusterRadius: 60, // default is 80, lower = tighter clusters
+    disableClusteringAtZoom: 12 // clusters break apart at zoom 12+
+});
 // 4. Fetch the road closure data from the JSON file
 fetch('../data/data_v4_final_roadclosures.json')
   .then(response => response.json())
