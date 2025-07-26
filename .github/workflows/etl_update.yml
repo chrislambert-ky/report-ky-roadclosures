@@ -2,7 +2,7 @@ name: Nightly ETL and Data Push
 
 on:
   schedule:
-    - cron: '10 5 * * *'  # 12:10am EST/EDT (America/New_York is UTC-5/UTC-4)
+    - cron: '30 5 * * *'  # 12:30am EST/EDT (America/New_York is UTC-5/UTC-4)
   workflow_dispatch:
 
 permissions:
