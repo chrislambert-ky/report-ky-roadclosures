@@ -3,3 +3,5 @@ startTime,endTime,totalRecords,elapsedSeconds,outputFile
 "2025-07-22T03:56:29.569Z","2025-07-22T03:56:52.667Z",9581,23.10,"./data/data_v4_final_roadclosures.json"
 "2025-07-22T04:27:23.822Z","2025-07-22T04:27:51.892Z",9581,28.07,"./data/data_v4_final_roadclosures.json"
 "2025-07-22T22:07:26.222Z","2025-07-22T22:08:01.613Z",9581,35.39,"./data/data_v4_final_roadclosures.json"
+"2025-07-26T03:28:31.501Z","2025-07-26T03:28:58.232Z",9581,26.73,"./data/data_v4_final_roadclosures.json"
+"2025-07-26T04:42:08.662Z","2025-07-26T04:42:46.915Z",9581,38.25,"./data/data_v4_final_roadclosures.json"

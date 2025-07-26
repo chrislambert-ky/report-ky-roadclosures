@@ -1,0 +1,45 @@
+name: Nightly ETL and Data Push
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 1am EST (6am UTC)
+  workflow_dispatch:
+
+jobs:
+  run-etl-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run ETL script
+        run: node etl_data.js
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add updated data and log files
+        run: |
+          git add data/data_v4_final_roadclosures.json log_etl/etl_run_log.csv
+
+      - name: Commit changes
+        run: |
+          git commit -m "Automated nightly ETL update"
+        continue-on-error: true
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

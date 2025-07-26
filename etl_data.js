@@ -1,71 +1,62 @@
+// DISCLAIMERS:
+// I do work for the Kentucky Transportation Cabinet but this is not an official KYTC project.
+// This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc)
+// I am not a professional software developer.
+// My background is:
+//    - IT Project Manager / Data Analyst / Highways Subject Matter Expert
+//    - Python ETLs
+//    - SQL (Google BigQuery, Oracle)
+//    - BI Tools (Looker Studio, Tableau, PowerBI).
+// This is my first attempt at writing a Node.js ETL script.
+// This script is co-written by GitHub CoPilot, GPT 4.1 using the autocomplete feature.
 
-// DOCUMENTATION:
+// GOAL:
+// This script aims to reprocess historic road closure data for analysis and reporting purposes.
+// This data will eventually support the Dashboards that are the main focus of this project.
+// This particular script attempts to recreate a python based ETL (extract, transform, and load) process.
 
-// This script was first documented by me and then I prompted GitHub Copilot
-// to add comments so that others can better understand the ETL process and use this 
-// script as a learning tool (not to mention reminding me how it works once I've walked away).
+// METHODOLOGY:
+// I'm going to break down my ETLs into steps for my own peace of mind.
+// Step 1: Fetch data from CSV source, parse as JSON, and save it to 'data_v1_full_dataset.json'.
+// Step 2: Fetch, parse, and filter fields/columns, and save to 'data_v2_parsed_filtered_data.json'.
+// Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as 'data_v3_reprocessed_dataset.json'.
+// Step 4: Fetch, parse, filter, reprocess, add etl logging results, and store the data for final output as 'data_v4_final_roadclosures.json'.
 
 // NOTES:
-
-// This script aims to reprocess historic road closure data for analysis and reporting purposes.
-// This ETL data will eventually support the Dashboards that are the main focus of this project.
-// This particular script attempts to handle my ETL (extract, transform, and load) process.
 // The data being retreived is historic road closure data.
 // Since roadway information changes over time, I need to re-process the data with more recent attributes.
 // I want to ensure that people can review historic data in the most recent context.
 
-// DISCLAIMERS:
-
-// I do work for the Kentucky Transportation Cabinet but this is not an official KYTC project.
-// This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc)
-
-// I am not a professional software developer.
-// My background is:
-//    - IT Project Manager / Data Analyst
-//    - Python ETLs
-//    - SQL (Google BigQuery, Oracle)
-//    - BI Tools (Looker Studio, Tableau, PowerBI).
-
-// This is my first attempt at writing a Node.js ETL script.
-// This script is co-written by GitHub CoPilot, GPT 4.1 using the autocomplete feature.
-
-// I'm going to break down my ETLs into steps for my own peace of mind.
-// Step 1: Fetch data from CSV source, parse as JSON, and save it to 'data_v1_full_dataset.json'.
-// Step 2: Fetch, parse, and filter fields, and save to 'data_v2_parsed_filtered_data.json'.
-// Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as 'data_v3_reprocessed_dataset.json'.
-// Step 4: Fetch, parse, filter, reprocess, log etl results, and store the data for final output as 'data_v4_final_roadclosures.json'.
+// AI Use
+// This script was first documented by me and then I prompted GitHub Copilot
+// to add comments so that others can better understand the ETL process 
+// and use this script as a learning tool.
+// (Not to mention reminding me how it works after I walk away).
+// I was also forced to use AI to help me with the errors
+// I kept trying to feed the entire 10k records to the API and it kept locking up.  
+// I needed Copilot Agentic mode to get me through it.
 
 
 // =========================
-// ETL PIPELINE OVERVIEW
+// MODULE IMPORTS - Very similar to Python imports
 // =========================
-// This script demonstrates a full ETL (Extract, Transform, Load) pipeline in Node.js.
-// It fetches a CSV file from a remote source, parses and filters the data, enriches each record
-// with additional attributes from an external API, and writes the results to a JSON file.
-// It also logs each run to a CSV file for tracking and reproducibility.
-
-// =========================
-// MODULE IMPORTS
-// =========================
-// 'node-fetch' is used for making HTTP requests (fetching remote CSV and API calls)
-// 'csv-parse/sync' is used for parsing CSV data into JavaScript objects
-
-
-
-// Import the fetch function so we can get data from the internet
+// 'node-fetch' is self explanatory - it's used for fetching data and/or making API calls.
+// 'csv-parse/sync' is used for parsing CSV data into JavaScript objects.
+// 'fs ' is used for file system operations (reading/writing files)
 import fetch from 'node-fetch';
-// Import the parse function so we can turn CSV text into JavaScript objects
 import { parse } from 'csv-parse/sync';
 import fs from 'fs';
 
 
 async function fetchCSV(url) 
-// -------------------------
-// EXTRACT STEP
+// EXTRACT STEP - Pulling data from a remote source
 // -------------------------
 // This function demonstrates how to fetch remote data using async/await and error handling.
 // Fetches CSV data from the other repo using the raw csv url.
 // I have added the error handling to ensure the fetch is successful.
+
+// DESIGN DECISION: I used async/await for network requests becuase that seemed like it would work.
+// Error handling is included to help me troubleshoot.
 {
   // Use fetch to get the CSV file from the internet
   const res = await fetch(url);
@@ -77,35 +68,33 @@ async function fetchCSV(url)
 
 
 function filterRows(csvText)
-// -------------------------
 // TRANSFORM STEP
 // -------------------------
-// This function shows how to parse CSV data and map it to a new array of objects,
-// keeping only the fields needed for downstream processing.
-// This function parses out the mos unique fields that cannot be replaced with the API.
-// The dataset is fairily large (approx 10K rows as of 2025-07-09).
+// This function shows how to parse CSV data.
+// I only need the unique fields that cannot be replaced with the API.
+// The dataset is fairly large (approx 10K rows as of 2025-07-09).
 // This will help reduce the amount of data processed and (I hope) improve performance.
+
 {
-  // Turn the CSV text into an array of objects (one for each row)
+  // Colnverts the CSV text into an array of objects (one for each row)
   const records = parse(csvText, { columns: true, skip_empty_lines: true });
-  // For each row, keep only the fields we care about
-  return records.map(row => ({
-    latitude: row.latitude, // Where the closure is (north/south)
-    longitude: row.longitude, // Where the closure is (east/west)
+  // For each row, keep only the fields that make the record unique.
+  return records.map(row => (
+    {
+    latitude: row.latitude, // Closure location (latitude)
+    longitude: row.longitude, // Closure location (longitude)
     Comments: row.Comments, // Notes about the closure
-    Reported_On: row.Reported_On, // When it was reported
-    End_Date: row.End_Date, // When it ended (if known)
-    Duration_Hours: row.Duration_Hours // How long it lasted
-  }));
+    Reported_On: row.Reported_On, // When the rclosure was first reported
+    End_Date: row.End_Date, // When the closure ended (if known)
+    Duration_Hours: row.Duration_Hours // Duration (hours) - this is calculate in the previous python script.
+    }));
 }
 
 
 async function enrichRow(row) 
-// -------------------------
 // ENRICHMENT STEP
 // -------------------------
-// This function demonstrates how to call an external API for each record, handle
-// different response structures, and merge new attributes into the original data.
+// This function demonstrates how to call an external API for each record and merge new attributes into a new dataset.
 // It also shows robust error handling for API/network issues.
 // This functon will leverage a specialized KYTC API for geo-processing data.
 // This will reprocess the unique historic data with updated attributes like Road_Name, Milepoint, etc.
@@ -114,12 +103,16 @@ async function enrichRow(row)
 // The API docs provide Python code to better understand the API and hopefull recreate the same functionality
 
 // DISCLAIMER: 
+// This was very tricky for me.  I simply did not have time to troubleshoot the problem.
+// I spoke with the API developer but they didn't know Javascript and couldn't halp me.
 // Working with this API took a considerable amount of trial and error.
 // I had to rely on GitHub CoPilot to help me with the errors.
+// GitHub Copilot in Agentic mode helped me with this after I struggled with the API locking up.
+
 {
-  // If we don't have coordinates, we can't look up the road info
+  // Theh API doesn't work without latitude and longitude (sort of - it's complicated).
   if (!row.latitude || !row.longitude) return { ...row, api_error: 'Missing coordinates' };
-  // Build the API request with the coordinates and the fields we want
+  // Build the API request with the coordinates and the fields I want
   const params = new URLSearchParams({
     xcoord: row.longitude, // API expects longitude as x
     ycoord: row.latitude,  // API expects latitude as y
@@ -129,7 +122,7 @@ async function enrichRow(row)
   // Make the full API URL
   const apiUrl = `https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/api/route/GetRouteInfoByCoordinates?${params.toString()}`;
   try {
-    // Ask the API for info about this location
+    // Ask the API for info about this location.  I'm using 'try' to avoid crashing the script if the API fails.
     const res = await fetch(apiUrl);
     // If the API didn't work, return the row with an error
     if (!res.ok) return { ...row, api_error: true };
@@ -141,14 +134,14 @@ async function enrichRow(row)
     // Add the new info to our row
     return {
       ...row,
-      District_Number : snap.District_Number || snap.district_number, // Which district
-      County_Name: snap.County_Name || snap.county_name, // Which county
-      Milepoint: snap.Milepoint || snap.milepoint, // Where on the road
-      Road_Name: snap.Road_Name || snap.road_name, // Name of the road
-      Route: snap.Route || snap.route, // Route number
-      Route_Label: snap.Route_Label || snap.route_label, // Route label
-      Route_Prefix: snap.Route_Prefix || snap.route_prefix, // Prefix (KY, US, etc)
-      Snap_Status: snap.Snap_Status || snap.snap_status // How well the API matched the location
+      District_Number : snap.District_Number || snap.district_number,
+      County_Name: snap.County_Name || snap.county_name,
+      Milepoint: snap.Milepoint || snap.milepoint,
+      Road_Name: snap.Road_Name || snap.road_name,
+      Route: snap.Route || snap.route,
+      Route_Label: snap.Route_Label || snap.route_label,
+      Route_Prefix: snap.Route_Prefix || snap.route_prefix,
+      Snap_Status: snap.Snap_Status || snap.snap_status // The API snapping has a distance threshold for gps coordinate vs roadway centerline.
     };
   } catch (e) {
     // If something went wrong, add the error message to the row
@@ -158,14 +151,13 @@ async function enrichRow(row)
 
 
 async function main()
-// This is the main function that runs everything step by step
+// MAIN
 // -------------------------
-// MAIN ORCHESTRATOR
-// -------------------------
+// This is the main function that runs everything.
 // This function ties together all ETL steps: extraction, transformation, enrichment, and loading.
-// It demonstrates batch processing, file I/O, and logging in Node.js.
-  // The following block demonstrates how to check for an existing file and warn the user
-  // that it will be overwritten, a common pattern in ETL jobs to avoid accidental data loss.
+// It demonstrates batch processing, file input/output and logging.
+// The following block demonstrates how to check for an existing file and warn the user
+// that it will be overwritten, a common pattern in ETL jobs to avoid accidental data loss.
 // This function will attempt to put all of this together.
 
 // Main workflow function:
@@ -179,38 +171,41 @@ async function main()
 // This provides console out to help debug the process
   // 1. Get the CSV file from the internet
   const csvUrl = 'https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv';
-  console.log('Fetching CSV from:', csvUrl);
-  const csvText = await fetchCSV(csvUrl);
-  console.log('CSV fetched. Length:', csvText.length);
+  console.log('Fetching CSV from:', csvUrl); // shows the URL being fetched
+  const csvText = await fetchCSV(csvUrl); // fetches the CSV file from the URL
+  console.log('CSV fetched. Length:', csvText.length); // shows how long the CSV is
   // 2. Turn the CSV into an array of objects
-  const filteredRows = filterRows(csvText);
-  console.log('Rows parsed:', filteredRows.length);
-  // Show the first row so we can see what the data looks like
-  if (filteredRows.length > 0)
+  const filteredRows = filterRows(csvText); // filters the rows to keep only the fields we need
+  console.log('Rows parsed:', filteredRows.length); // shows how many rows were parsed
+  // Show the first row so users can see what the data looks like.
+  if (filteredRows.length > 0) // check if there are any rows to show
   {
-    console.log('First row:', filteredRows[0]);
+    console.log('First row:', filteredRows[0]); // show the first row of data
   }
 
 
 // NOTE about the API: 
 // The following code processes the enrichment in batches to avoid overloading the API and to track progress.
+// This was needed for the troubleshooting process.
 // After some experimentation, I found that the API cannot handle a large number of requests.
 // The API developer told me that my 10K records shouldn't be a problem 
 // but it still locks when I try to pass the entire 10K records.
-// The API developer is not an Node.js developer and is not familiar with possible Node.js issues
-// We managed to get it working so I'm going to leave it as-is.
+// The API developer is not a Javascript developer and is not familiar with possible Node.js issues
+// He and I managed to get it working with GitHub copilot so I'm going to leave it as-is.
   // Set up batch size and output file
-  const BATCH_SIZE = 500; // How many records to process at once
-  const rowsToProcess = filteredRows;
+  const BATCH_SIZE = 500; // I have adjusted this for performance.  500 records per batch seems to work well.
+  const rowsToProcess = filteredRows; // keep the filtered rows for processing
   let idx = 0; // Start at the beginning
   const outputFile = './data/data_v4_final_roadclosures.json'; // Where to save the results
   // Let the user know if the file will be overwritten
-  if (fs.existsSync(outputFile)) {
-    console.log('Output file will be overwritten at the end of processing.');
-  }
+  if (fs.existsSync(outputFile)) 
+    {
+    // This line lets the user know the file will be overwritten.  
+    // I had to do this to avoid confusion and troubleshooting.
+    console.log('Output file will be overwritten at the end of processing.'); 
+    }
 
 async function processBatch(batch, batchStartIdx)
-// -------------------------
 // BATCH PROCESSING
 // -------------------------
 // This helper function shows how to process a batch of records concurrently using Promise.all.
