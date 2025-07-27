@@ -32,6 +32,25 @@ body, html
   padding: 0;
 }
 
+h1
+{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 2.1rem;
+  font-weight: bold;
+  color: var(--blue);
+  margin: 1rem 0;
+  text-align: center;
+}
+h2
+{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--light-blue);
+  margin: 0.5rem 0;
+  text-align: center;
+}
+
 section {
   padding: 1rem;
   margin: 0 auto;

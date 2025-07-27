@@ -4,7 +4,7 @@ for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/)
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
 */
-
+ 
 
 /* Color Palette */
 :root 
@@ -41,7 +41,6 @@ h1
   margin: 1rem 0;
   text-align: center;
 }
-
 h2
 {
   font-family: Arial, Helvetica, sans-serif;

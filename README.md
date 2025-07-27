@@ -56,6 +56,7 @@ This document started as a project outline but I'm updating the document as a I 
          - Total Duration of Closures (hours) per County
          - Total Duration of Closures (hours) per Route
       - **(Optional)** Map of Closures
+   - icons downloaded from https://www.freeicons.org/
 
 **Getting Started**
 

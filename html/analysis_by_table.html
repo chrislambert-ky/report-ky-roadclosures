@@ -1,0 +1,214 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Analysis of KY Road Closures Table View</title>
+    <link rel="stylesheet" href="../css/analysis_by_table.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a class="nav-link" href="../index.html">Home</a>
+        <a class="nav-link" href="analysis_by_count.html">Analysis by Count</a>
+        <a class="nav-link" href="analysis_by_duration.html">Analysis by Duration</a>
+        <a class="nav-link" href="analysis_by_map.html">Map View</a>
+        <a class="nav-link" href="analysis_by_table.html">Table View</a>
+        <a class="nav-link" href="powerbi.html">Power BI Dashboard</a>
+        <a class="nav-link" href="about.html">About</a>
+    </nav>
+    <div style="text-align: center;">
+        <h1>Interactive Analysis of KY Road Closures</h1>
+        <h2>This page will provide the road closure in table form.</h2>
+
+<!-- I'm using AG Grid for this page. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.0/dist/ag-grid-community.min.noStyle.js"></script>
+
+<!-- Download buttons -->
+<div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+  <button id="download-full-csv" class="font-bold">Download Full CSV</button>
+  <button id="download-filtered-csv" class="font-bold">Download Filtered CSV</button>
+</div>
+
+<!-- Empty div for the table since AG Grid will create the table via DOM -->
+<div id="aggrid-table-container">
+  <div id="myGrid" class="ag-theme-alpine"></div>
+</div>
+
+
+<!-- Everything from here on is from the AG Grid website, googling code snippets, or just asking copilot -->
+<!-- I'm over documenting for the sake of my sanity -->
+
+<script>
+let gridApi = null;  // This will hold our table so we can control it
+let fullData = [];   // This will store ALL our road closure data
+
+// Fetch the data
+fetch('../data/data_v4_final_roadclosures.json')
+  .then(response => {
+    // Check for the data
+    if (!response.ok) {
+      throw new Error('Oops! Could not get the data');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Make sure we got good data
+    if (!Array.isArray(data) || data.length === 0) {
+      document.getElementById('aggrid-table-container').innerHTML = '<p>Sorry, no data found! 😞</p>';
+      return;
+    }
+    
+    fullData = data;
+    
+    // Clean out any old table that might be there
+    const gridDiv = document.getElementById('myGrid');
+    if (gridDiv && gridDiv.__agGridInstance) {
+      gridDiv.innerHTML = '';
+    }
+    
+    // Define the columns we want and how they should look
+    const columnDefs = [
+      { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true },
+      { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
+      { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true },
+      { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true },
+      { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
+      { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
+      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true },
+      { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true },
+      { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true },
+
+      { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true }
+    ];
+    
+    // Set up all the table options and rules.  AG Grid has a lot of option!
+    // Ask copilot to explain our code snippets.
+    const gridOptions = {
+      columnDefs: columnDefs,  // Use our column setup from above
+      rowData: data.map(row => {
+        const newRow = { ...row };
+        delete newRow['Snap_Status'];  // Remove this column
+        return newRow;
+      }),
+      defaultColDef: {
+        flex: 1,           // Make columns stretch to fill space
+        minWidth: 120,     // Don't let columns get too narrow
+        filter: true,
+        sortable: true,
+        resizable: true,
+        floatingFilter: true // Show little search boxes under each header
+      },
+      pagination: true,
+      paginationPageSize: 10,
+      domLayout: 'autoHeight', // Make the table size itself
+      onGridReady: function(params) {
+        // This happens when the table is done setting up
+        gridApi = params.api;  // Save a reference so we can control the table later
+        
+        // Make all columns auto-size to fit their content perfectly
+        const allColumnIds = [];
+        params.columnApi.getAllColumns().forEach(col => {
+          allColumnIds.push(col.getColId());
+        });
+        params.columnApi.autoSizeColumns(allColumnIds, false);
+      }
+    };
+    
+    // Generate the table.
+    if (window.agGrid && window.agGrid.Grid) {
+      new agGrid.Grid(gridDiv, gridOptions);
+      gridDiv.__agGridInstance = true;  // Render the table
+    } else {
+      // error handling if AG Grid didn't load
+      document.getElementById('aggrid-table-container').innerHTML = '<p style="color:red;">Oops! The table library didn\'t load. Try refreshing the page! 🔄</p>';
+    }
+  })
+  .catch((err) => {
+    // If anything goes wrong, show a helpful error message
+    document.getElementById('aggrid-table-container').innerHTML = '<p style="color:red;">Something went wrong loading the data 😞<br>' + (err.message ? err.message : '') + '<br>Make sure you\'re running this on a web server!</p>';
+  });
+
+// DOWNLOAD BUTTON SETUP
+// Wait for the page to finish loading, then set up our download buttons
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // "Download Full CSV"
+  document.getElementById('download-full-csv').addEventListener('click', function() {
+    if (!fullData.length) return;  // Make sure we have data first
+    // Remove the Snap_Status column and convert to CSV
+    const csv = convertToCSV(fullData.map(row => {
+      const newRow = { ...row };
+      delete newRow['Snap_Status'];
+      return newRow;
+    }));
+    downloadCSV(csv, 'road_closures_full.csv');
+  });
+  
+  // When someone clicks "Download Filtered CSV"
+  document.getElementById('download-filtered-csv').addEventListener('click', function() {
+    if (!gridApi) return;  // Make sure the table exists
+    // Filter for only the rows that are currently visible (after filtering)
+    const filteredRows = [];
+    gridApi.forEachNodeAfterFilterAndSort(node => filteredRows.push(node.data));
+    if (!filteredRows.length) return;
+    
+    const csv = convertToCSV(filteredRows);
+    downloadCSV(csv, 'road_closures_filtered.csv');
+  });
+});
+
+// Converts our data into CSV format
+function convertToCSV(arr) {
+  if (!arr.length) return '';  // If no data, return empty
+  // These are the columns we want, in the order we want them
+  const keys = [
+    "County_Name",
+    "Route_Label", 
+    "Road_Name",
+    "Milepoint",
+    "latitude",
+    "longitude",
+    "Reported_On",
+    "End_Date",
+    "Duration_Hours",
+    "Comments"
+  ];
+
+  // Create the header row
+  const header = keys.join(',');
+  // Create all the data rows
+  // This was purely AI generated after seeing my keys and data structure
+  // It loops through each row and makes sure to handle quotes correctly
+  // This is how we make sure commas in the data don't break our CSV:
+  // By wrapping each value in quotes, like you would in Excel.
+
+  const rows = arr.map(row => keys.map(k => '"' + String(row[k] ?? '').replace(/"/g, '""') + '"').join(','));
+  // Put it all together
+  return header + '\n' + rows.join('\n');
+}
+
+// Function to download the CSV file
+function downloadCSV(csv, filename) {
+  // Create a blob
+  const blob = new Blob([csv], { type: 'text/csv' });
+  
+  // Create a temporary download link
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  
+  // Add the link to the page, click it, then remove it
+  // (This happens so fast you won't see it!)
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  // Clean up the temporary URL
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
