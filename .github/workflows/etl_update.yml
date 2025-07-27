@@ -1,4 +1,4 @@
-name: Nightly ETL and Data Push
+name: Road Closure ETL Update - Report Project
 
 on:
   schedule:
