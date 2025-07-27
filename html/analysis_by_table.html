@@ -79,8 +79,7 @@ fetch('../data/data_v4_final_roadclosures.json')
       { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true },
       { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true },
       { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true },
-
-      { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true }
+      { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
     ];
     
     // Set up all the table options and rules.  AG Grid has a lot of option!
