@@ -1,5 +1,11 @@
+/* 
+After having problems with CSS, I decided to create a new CSS for each HTML file. 
+I know that isn't optimal, but I wanted to keep the styles separate for clarity.
+*/
+
+
 /* Road Closure Style Guide:
-This is a modified, more comprehensive version of the style guide provided to me 
+This is a modified, more focused version of the style guide provided to me 
 for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/) 
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
@@ -52,7 +58,8 @@ h2
 }
 
 /* Navigation Bar Styles */
-.main-nav {
+.main-nav 
+{
   background: var(--light-gray);
   padding: 1rem 0;
   display: flex;
@@ -61,7 +68,8 @@ h2
   border-bottom: 2px solid var(--blue);
 }
 
-.main-nav .nav-link {
+.main-nav .nav-link 
+{
   color: var(--blue);
   text-decoration: none;
   font-weight: bold;
@@ -72,14 +80,16 @@ h2
 }
 
 .main-nav .nav-link:hover,
-.main-nav .nav-link:focus {
+.main-nav .nav-link:focus 
+{
   background: var(--blue);
   color: #fff;
   text-decoration: none;
 }
 
 /* Download Button Styles */
-.font-bold {
+.font-bold 
+{
   font-weight: bold;
   background: var(--blue);
   color: #fff;
@@ -91,17 +101,20 @@ h2
   transition: background 0.2s, transform 0.1s;
 }
 
-.font-bold:hover {
+.font-bold:hover 
+{
   background: var(--light-blue);
   transform: translateY(-1px);
 }
 
-.font-bold:active {
+.font-bold:active 
+{
   transform: translateY(0);
 }
 
 /* AG Grid Container Styles */
-#aggrid-table-container {
+#aggrid-table-container 
+{
   margin: 2rem 20px;
   border-radius: 8px;
   overflow: hidden;
@@ -109,39 +122,46 @@ h2
 }
 
 /* Responsive Design */
-@media (max-width: 700px) {
+@media (max-width: 700px) 
+{
   .main-nav {
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
   }
-  
-  .main-nav .nav-link {
+
+  .main-nav .nav-link 
+  {
     font-size: 1rem;
     padding: 0.5rem 1rem;
     width: 100%;
     text-align: center;
     border-radius: 0;
   }
-  
-  #aggrid-table-container {
+
+  #aggrid-table-container 
+  {
     margin: 2rem 10px;
   }
 }
 
-@media (max-width: 400px) {
-  .main-nav .nav-link {
+@media (max-width: 400px) 
+{
+  .main-nav .nav-link 
+  {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
   }
-  
-  .font-bold {
+
+  .font-bold 
+  {
     font-size: 0.9rem;
     padding: 0.6rem 1rem;
   }
-  
-  #aggrid-table-container {
+
+  #aggrid-table-container 
+  {
     margin: 2rem 5px;
   }
 }

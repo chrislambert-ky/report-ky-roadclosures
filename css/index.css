@@ -1,5 +1,10 @@
+/* 
+After having problems with CSS, I decided to create a new CSS for each HTML file. 
+I know that isn't optimal, but I wanted to keep the styles separate for clarity.
+*/
+
 /* Road Closure Style Guide:
-This is a modified, more comprehensive version of the style guide provided to me 
+This is a modified, more focused version of the style guide provided to me 
 for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/) 
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
@@ -135,7 +140,8 @@ h2
 /* Responsive Design */
 @media (max-width: 900px) 
 {
-  .image-grid {
+  .image-grid 
+  {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }

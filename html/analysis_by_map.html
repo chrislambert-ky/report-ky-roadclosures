@@ -38,14 +38,17 @@
 // Leaflet Map
 // =============================
 // The following Leaflet map is based on their Quick Start example.
+// https://leafletjs.com/examples/quick-start/
 // I just had to fetch my data and start customizing the content.
-// The performance was horrible with 10,000+ markers, so I used the Leaflet.markercluster plugin.
+// The performance was horrible with 10,000+ individual markers
+// I had to use the Leaflet.markercluster plugin.
 
-// Create the map and set the initial view to Kentucky
+// latitude, longitude, and zoom to center of Kentucky
 const map = L.map('map').setView([37.822295, -85.76819], 7);
 
 // Add OpenStreetMap tiles as the base map layer
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', 
+{
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);

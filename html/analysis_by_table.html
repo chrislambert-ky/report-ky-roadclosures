@@ -31,14 +31,15 @@
   <button id="download-filtered-csv" class="font-bold">Download Filtered CSV</button>
 </div>
 
-<!-- Empty div for the table since AG Grid will create the table via DOM -->
+<!-- I'm over documenting for the sake of my sanity -->
+<!-- Quite a bit of the code below can be found on the AG Grid website or googling. -->
+<!-- https://www.ag-grid.com/javascript-data-grid/getting-started/ -->
+<!-- AI doesn't always get it right with this library. -->
+
+<!-- I have to setup somewhere in the HTML for the script to interact with the html -->
 <div id="aggrid-table-container">
   <div id="myGrid" class="ag-theme-alpine"></div>
 </div>
-
-
-<!-- Everything from here on is from the AG Grid website, googling code snippets, or just asking copilot -->
-<!-- I'm over documenting for the sake of my sanity -->
 
 <script>
 let gridApi = null;  // This will hold our table so we can control it
@@ -47,11 +48,13 @@ let fullData = [];   // This will store ALL our road closure data
 // Fetch the data and create the table
 fetch('../data/data_v4_final_roadclosures.json')
   .then(response => response.json())
-  .then(data => {
+  .then(data => 
+  {
     fullData = data;
     
     // Define the columns we want and how they should look
-    const columnDefs = [
+    const columnDefs = 
+    [
       { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true },
       { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
       { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true },
@@ -68,7 +71,9 @@ fetch('../data/data_v4_final_roadclosures.json')
     const gridOptions = {
       columnDefs: columnDefs,
       rowData: data,
-      defaultColDef: {
+      
+      defaultColDef: 
+      {
         flex: 1,
         minWidth: 120,
         filter: true,
@@ -79,7 +84,8 @@ fetch('../data/data_v4_final_roadclosures.json')
       pagination: true,
       paginationPageSize: 10,
       domLayout: 'autoHeight',
-      onGridReady: function(params) {
+      onGridReady: function(params) 
+      {
         gridApi = params.api;
         // Make all columns auto-size to fit their content perfectly
         params.columnApi.autoSizeColumns();
@@ -91,16 +97,17 @@ fetch('../data/data_v4_final_roadclosures.json')
   });
 
 // DOWNLOAD BUTTON SETUP
-document.addEventListener('DOMContentLoaded', function() {
-  
+document.addEventListener('DOMContentLoaded', function() 
+{
   // "Download Full CSV"
-  document.getElementById('download-full-csv').addEventListener('click', function() {
+  document.getElementById('download-full-csv').addEventListener('click', function() 
+  {
     const csv = convertToCSV(fullData);
     downloadCSV(csv, 'road_closures_full.csv');
-  });
-  
+  }); 
   // "Download Filtered CSV"
-  document.getElementById('download-filtered-csv').addEventListener('click', function() {
+  document.getElementById('download-filtered-csv').addEventListener('click', function() 
+  {
     const filteredRows = [];
     gridApi.forEachNodeAfterFilterAndSort(node => filteredRows.push(node.data));
     const csv = convertToCSV(filteredRows);
@@ -118,6 +125,7 @@ function convertToCSV(arr) {
   ];
   
   const header = keys.join(',');
+  // AI use : this was tricky to figure out.
   const rows = arr.map(row => keys.map(k => '"' + String(row[k] ?? '').replace(/"/g, '""') + '"').join(','));
   return header + '\n' + rows.join('\n');
 }

@@ -35,7 +35,8 @@ fetch('../data/data_v4_final_roadclosures.json')
   .then(data => {
     // Count closures by year
     const yearCounts = {};
-    data.forEach(closure => {
+    data.forEach(closure => 
+    {
       // Extract the year from the reported date
       const year = new Date(closure.Reported_On).getFullYear();
       // Add 1 to this year's count (create year if it doesn't exist)
@@ -48,29 +49,35 @@ fetch('../data/data_v4_final_roadclosures.json')
     
     // Set up the chart configuration
     const option = {
-      tooltip: {
+      tooltip: 
+      {
         trigger: 'axis',
-        axisPointer: {
+        axisPointer: 
+        {
           type: 'shadow'
         }
       },
-      grid: {
+      grid: 
+      {
         left: '3%',
         right: '4%',
         bottom: '3%',
         containLabel: true
       },
-      xAxis: {
+      xAxis: 
+      {
         type: 'category',
         data: years,
         axisTick: {
           alignWithLabel: true
         }
       },
-      yAxis: {
+      yAxis: 
+      {
         type: 'value'
       },
-      series: [{
+      series: 
+      [{
         name: 'Road Closures',
         type: 'bar',
         barWidth: '60%',

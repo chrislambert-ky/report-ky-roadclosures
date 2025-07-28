@@ -1,5 +1,11 @@
+/* 
+After having problems with CSS, I decided to create a new CSS for each HTML file. 
+I know that isn't optimal, but I wanted to keep the styles separate for clarity.
+*/
+
+
 /* Road Closure Style Guide:
-This is a modified, more comprehensive version of the style guide provided to me 
+This is a modified, more focused version of the style guide provided to me 
 for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/) 
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
@@ -52,7 +58,8 @@ h2
 }
 
 /* Navigation Bar Styles */
-.main-nav {
+.main-nav 
+{
   background: var(--light-gray);
   padding: 1rem 0;
   display: flex;
@@ -61,7 +68,8 @@ h2
   border-bottom: 2px solid var(--blue);
 }
 
-.main-nav .nav-link {
+.main-nav .nav-link 
+{
   color: var(--blue);
   text-decoration: none;
   font-weight: bold;
@@ -72,21 +80,25 @@ h2
 }
 
 .main-nav .nav-link:hover,
-.main-nav .nav-link:focus {
+.main-nav .nav-link:focus 
+{
   background: var(--blue);
   color: #fff;
   text-decoration: none;
 }
 
 /* Responsive Design */
-@media (max-width: 700px) {
-  .main-nav {
+@media (max-width: 700px) 
+{
+  .main-nav 
+  {
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
   }
-  .main-nav .nav-link {
+  .main-nav .nav-link 
+  {
     font-size: 1rem;
     padding: 0.5rem 1rem;
     width: 100%;
@@ -95,8 +107,10 @@ h2
   }
 }
 
-@media (max-width: 400px) {
-  .main-nav .nav-link {
+@media (max-width: 400px) 
+{
+  .main-nav .nav-link 
+  {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
   }
