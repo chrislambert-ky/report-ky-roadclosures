@@ -23,70 +23,45 @@
     <section>
         <h2>Disclaimers</h2>
         <ul>
-            <li>I do work for the Kentucky Transportation Cabinet but this is not an official KYTC project.</li>
+            <li>I do work for the Kentucky Transportation Cabinet but this is <strong><em>not</em></strong> an official KYTC project.</li>
             <li>This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc).</li>
+            <li>I am <strong><em>not</em></strong> a professional software developer.</li>
+            <li>This is my first attempt at web development.</li>
+            <li>The Node.js ETL script required heavy use of GitHub Copilot for troubleshooting.</li>
         </ul>
     </section>
     <section>
         <h2>About Me</h2>
         <ul>
-            <li>I am not a professional software developer.</li>
-            <li>My background is:
-                <ul>
-                    <li>IT Project Manager / Data Analyst</li>
-                    <li>Python ETLs</li>
-                    <li>SQL (Google BigQuery, Oracle)</li>
-                    <li>BI Tools (Looker Studio, Tableau, PowerBI)</li>
-                </ul>
+                    <li>IT Project Manager</li>
+                    <li>Data Analyst</li>
+                    <li>Python ETL</li>
+                    <li>SQL Developer (Google BigQuery, Oracle)</li>
+                    <li>BI Dashboard Developer (Looker Studio, Tableau, PowerBI)</li>
             </li>
         </ul>
     </section>
     <section>
-        <h2>Project Notes</h2>
-        <ul>
-            <li>This is my first attempt at writing a Node.js ETL script.</li>
-            <li>This script is co-written by GitHub Copilot, GPT 4.1 using the autocomplete feature.</li>
-        </ul>
-    </section>
-    <section>
-        <h2>Data Pipeline:</h2>
+        <h2>Node.js Server-Side Scripting:</h2>
         <ol>
-            <li>Step 1: Fetch data from CSV source, parse as JSON, and save it to <b>data_full_dataset.json</b>.</li>
-            <li>Step 2: Fetch, parse, and filter fields, and save to <b>data_parsed_data.json</b>.</li>
-            <li>Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as <b>data_reportready_dataset.json</b>.</li>
+            <li><strong>Extract:</strong> Download the latest CSV data from source GitHub repository.</li>
+            <li><strong>Transform:</strong> Parse the CSV and keep only the essential fields (latitude, longitude, comments, reported date, end date, duration).</li>
+            <li><strong>Enrich:</strong> For each record, call the KYTC Spatial API to add updated road attributes (district, county, milepoint, road name, route, etc.).</li>
+            <li><strong>Batch Processing:</strong> Process records in batches to avoid overloading the API and write results incrementally to a JSON file.</li>
+            <li><strong>Output & Logging:</strong> Save the final enriched dataset as <b>data_v4_final_roadclosures.json</b> and log ETL run details (record count, time, etc.) to a CSV log file.</li>
         </ol>
     </section>
     <section>
         <h2>User Interface:</h2>
-        <h3>Web Design: Interactive Dashboards</h3>
         <ul>
-            <li>Develop site for responsive design.</li>
-            <li>Utilize standard CSS throughout development.</li>
-            <li>Visualize data with Apache ECHARTS
-                <ul>
-                    <li><strong>By Count Page:</strong>
-                        <ul>
-                            <li>Provide dynamic filter for District</li>
-                            <li>Provide dynamic filter for Year</li>
-                            <li>Count of Closures per District</li>
-                            <li>Count of Closures per Year</li>
-                            <li>Count of Closures per County</li>
-                            <li>Count of Closures per Route</li>
-                        </ul>
-                    </li>
-                    <li><strong>By Duration Page:</strong>
-                        <ul>
-                            <li>Provide dynamic filter for District</li>
-                            <li>Provide dynamic filter for Year</li>
-                            <li>Total Duration of Closures (hours) per District</li>
-                            <li>Total Duration of Closures (hours) per Year</li>
-                            <li>Total Duration of Closures (hours) per County</li>
-                            <li>Total Duration of Closures (hours) per Route</li>
-                        </ul>
-                    </li>
-                    <li><strong>(Optional)</strong> Map of Closures</li>
-                </ul>
-            </li>
+            <li><strong>Responsive Design:</strong> All pages are mobile-friendly and use a consistent navigation bar and color scheme.</li>
+            <li><strong>Home (index.html):</strong> Dashboard landing page with visual links to all analysis and info pages.</li>
+            <li><strong>Analysis by Count (analysis_by_count.html):</strong> Interactive bar chart (Apache ECharts) showing the number of road closures by year, with tooltips and dynamic charting.</li>
+            <li><strong>Analysis by Duration (analysis_by_duration.html):</strong> Interactive bar chart (Apache ECharts) showing total closure duration by year, with tooltips and dynamic charting.</li>
+            <li><strong>Map View (analysis_by_map.html):</strong> Interactive Leaflet map with marker clustering, showing closure locations and popups with details for each closure.</li>
+            <li><strong>Table View (analysis_by_table.html):</strong> AG Grid table with filtering, sorting, and CSV download for both full and filtered data.</li>
+            <li><strong>Power BI Dashboard (powerbi.html):</strong> Embedded Power BI dashboard for official reporting and comparison.</li>
+            <li><strong>About (about.html):</strong> Project background, methodology, and documentation for learning and transparency.</li>
         </ul>
     </section>
 </body>
