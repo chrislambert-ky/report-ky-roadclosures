@@ -51,8 +51,7 @@ async function main() {
   }
 }
 
-async function enrichRow(row) 
-{
+async function enrichRow(row) {
   const params = new URLSearchParams();
   params.append('xcoord', row.longitude);
   params.append('ycoord', row.latitude);
@@ -60,14 +59,10 @@ async function enrichRow(row)
   params.append('return_format', 'json');
   const apiUrl = 'https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/api/route/GetRouteInfoByCoordinates?' + params.toString();
   const response = await fetch(apiUrl);
+  
   let snap = await response.json();
   return {
-    latitude: row.latitude,
-    longitude: row.longitude,
-    Comments: row.Comments,
-    Reported_On: row.Reported_On,
-    End_Date: row.End_Date,
-    Duration_Hours: row.Duration_Hours,
+    ...row,
     District_Number: snap.District_Number || snap.district_number,
     County_Name: snap.County_Name || snap.county_name,
     Milepoint: snap.Milepoint || snap.milepoint,
