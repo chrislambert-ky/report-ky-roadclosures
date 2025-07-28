@@ -60,8 +60,8 @@ This document started as a project outline but I'm updating the document as a I 
 - **Social links:**
   - **(complete)** Social/contact links with SVG icons in About and other pages
 - **Documentation:**
-  - **(complete)**ETL and UI workflow documented in About and server-side docs
-  - **(complete)**Icons downloaded from https://www.freeicons.org/
+  - **(complete)** ETL and UI workflow documented in About and server-side docs
+  - **(complete)** Icons downloaded from https://www.freeicons.org/
 
 
 ## Getting Started
