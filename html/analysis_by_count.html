@@ -20,7 +20,7 @@
     <div style="text-align: center;">
         <h1>Interactive Analysis of KY Road Closures: by Count of Road Closures</h1>
         <h2>This page will provide analysis of road closures by count.</h2>
-        <p>My data will be loaded soon.</p>
+        <h2>Data refreshes daily 12:30am EST</h2>
     </div>
 <!-- copied and pasted from the apache echart site -->
 <!-- Now I need to customize with my data -->
@@ -28,46 +28,59 @@
 <script>
 var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
-var option;
 
-option = {
-  tooltip: {
-    trigger: 'axis',
-    axisPointer: {
-      type: 'shadow'
-    }
-  },
-  grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
-    containLabel: true
-  },
-  xAxis: [
-    {
-      type: 'category',
-      data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      axisTick: {
-        alignWithLabel: true
-      }
-    }
-  ],
-  yAxis: [
-    {
-      type: 'value'
-    }
-  ],
-  series: [
-    {
-      name: 'Direct',
-      type: 'bar',
-      barWidth: '60%',
-      data: [10, 52, 200, 334, 390, 330, 220]
-    }
-  ]
-};
-
-option && myChart.setOption(option);
+// Fetch data and create chart
+fetch('../data/data_v4_final_roadclosures.json')
+  .then(response => response.json())
+  .then(data => {
+    // Count closures by year
+    const yearCounts = {};
+    data.forEach(closure => {
+      // Extract the year from the reported date
+      const year = new Date(closure.Reported_On).getFullYear();
+      // Add 1 to this year's count (create year if it doesn't exist)
+      yearCounts[year] = (yearCounts[year] || 0) + 1;
+    });
+    
+    // Convert to arrays for chart - ECharts needs arrays not objects
+    const years = Object.keys(yearCounts).sort();
+    const counts = years.map(year => yearCounts[year]);
+    
+    // Set up the chart configuration
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: years,
+        axisTick: {
+          alignWithLabel: true
+        }
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: [{
+        name: 'Road Closures',
+        type: 'bar',
+        barWidth: '60%',
+        data: counts
+      }]
+    };
+    
+    // Apply the configuration to create the chart
+    myChart.setOption(option);
+  });
 </script>
 </div>
 

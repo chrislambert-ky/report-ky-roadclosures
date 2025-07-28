@@ -44,29 +44,11 @@
 let gridApi = null;  // This will hold our table so we can control it
 let fullData = [];   // This will store ALL our road closure data
 
-// Fetch the data
+// Fetch the data and create the table
 fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => {
-    // Check for the data
-    if (!response.ok) {
-      throw new Error('Oops! Could not get the data');
-    }
-    return response.json();
-  })
+  .then(response => response.json())
   .then(data => {
-    // Make sure we got good data
-    if (!Array.isArray(data) || data.length === 0) {
-      document.getElementById('aggrid-table-container').innerHTML = '<p>Sorry, no data found! 😞</p>';
-      return;
-    }
-    
     fullData = data;
-    
-    // Clean out any old table that might be there
-    const gridDiv = document.getElementById('myGrid');
-    if (gridDiv && gridDiv.__agGridInstance) {
-      gridDiv.innerHTML = '';
-    }
     
     // Define the columns we want and how they should look
     const columnDefs = [
@@ -82,18 +64,13 @@ fetch('../data/data_v4_final_roadclosures.json')
       { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
     ];
     
-    // Set up all the table options and rules.  AG Grid has a lot of option!
-    // Ask copilot to explain our code snippets.
+    // Set up all the table options and rules
     const gridOptions = {
-      columnDefs: columnDefs,  // Use our column setup from above
-      rowData: data.map(row => {
-        const newRow = { ...row };
-        delete newRow['Snap_Status'];  // Remove this column
-        return newRow;
-      }),
+      columnDefs: columnDefs,
+      rowData: data,
       defaultColDef: {
-        flex: 1,           // Make columns stretch to fill space
-        minWidth: 120,     // Don't let columns get too narrow
+        flex: 1,
+        minWidth: 120,
         filter: true,
         sortable: true,
         resizable: true,
@@ -101,58 +78,31 @@ fetch('../data/data_v4_final_roadclosures.json')
       },
       pagination: true,
       paginationPageSize: 10,
-      domLayout: 'autoHeight', // Make the table size itself
+      domLayout: 'autoHeight',
       onGridReady: function(params) {
-        // This happens when the table is done setting up
-        gridApi = params.api;  // Save a reference so we can control the table later
-        
+        gridApi = params.api;
         // Make all columns auto-size to fit their content perfectly
-        const allColumnIds = [];
-        params.columnApi.getAllColumns().forEach(col => {
-          allColumnIds.push(col.getColId());
-        });
-        params.columnApi.autoSizeColumns(allColumnIds, false);
+        params.columnApi.autoSizeColumns();
       }
     };
     
-    // Generate the table.
-    if (window.agGrid && window.agGrid.Grid) {
-      new agGrid.Grid(gridDiv, gridOptions);
-      gridDiv.__agGridInstance = true;  // Render the table
-    } else {
-      // error handling if AG Grid didn't load
-      document.getElementById('aggrid-table-container').innerHTML = '<p style="color:red;">Oops! The table library didn\'t load. Try refreshing the page! 🔄</p>';
-    }
-  })
-  .catch((err) => {
-    // If anything goes wrong, show a helpful error message
-    document.getElementById('aggrid-table-container').innerHTML = '<p style="color:red;">Something went wrong loading the data 😞<br>' + (err.message ? err.message : '') + '<br>Make sure you\'re running this on a web server!</p>';
+    // Generate the table
+    new agGrid.Grid(document.getElementById('myGrid'), gridOptions);
   });
 
 // DOWNLOAD BUTTON SETUP
-// Wait for the page to finish loading, then set up our download buttons
 document.addEventListener('DOMContentLoaded', function() {
   
   // "Download Full CSV"
   document.getElementById('download-full-csv').addEventListener('click', function() {
-    if (!fullData.length) return;  // Make sure we have data first
-    // Remove the Snap_Status column and convert to CSV
-    const csv = convertToCSV(fullData.map(row => {
-      const newRow = { ...row };
-      delete newRow['Snap_Status'];
-      return newRow;
-    }));
+    const csv = convertToCSV(fullData);
     downloadCSV(csv, 'road_closures_full.csv');
   });
   
-  // When someone clicks "Download Filtered CSV"
+  // "Download Filtered CSV"
   document.getElementById('download-filtered-csv').addEventListener('click', function() {
-    if (!gridApi) return;  // Make sure the table exists
-    // Filter for only the rows that are currently visible (after filtering)
     const filteredRows = [];
     gridApi.forEachNodeAfterFilterAndSort(node => filteredRows.push(node.data));
-    if (!filteredRows.length) return;
-    
     const csv = convertToCSV(filteredRows);
     downloadCSV(csv, 'road_closures_filtered.csv');
   });
@@ -160,52 +110,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Converts our data into CSV format
 function convertToCSV(arr) {
-  if (!arr.length) return '';  // If no data, return empty
   // These are the columns we want, in the order we want them
   const keys = [
-    "County_Name",
-    "Route_Label", 
-    "Road_Name",
-    "Milepoint",
-    "latitude",
-    "longitude",
-    "Reported_On",
-    "End_Date",
-    "Duration_Hours",
-    "Comments"
+    "County_Name", "Route_Label", "Road_Name", "Milepoint",
+    "latitude", "longitude", "Reported_On", "End_Date", 
+    "Duration_Hours", "Comments"
   ];
-
-  // Create the header row
+  
   const header = keys.join(',');
-  // Create all the data rows
-  // This was purely AI generated after seeing my keys and data structure
-  // It loops through each row and makes sure to handle quotes correctly
-  // This is how we make sure commas in the data don't break our CSV:
-  // By wrapping each value in quotes, like you would in Excel.
-
   const rows = arr.map(row => keys.map(k => '"' + String(row[k] ?? '').replace(/"/g, '""') + '"').join(','));
-  // Put it all together
   return header + '\n' + rows.join('\n');
 }
 
 // Function to download the CSV file
 function downloadCSV(csv, filename) {
-  // Create a blob
   const blob = new Blob([csv], { type: 'text/csv' });
-  
-  // Create a temporary download link
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
-  
-  // Add the link to the page, click it, then remove it
-  // (This happens so fast you won't see it!)
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  
-  // Clean up the temporary URL
   URL.revokeObjectURL(url);
 }
 </script>

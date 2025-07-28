@@ -5,7 +5,6 @@ I like the clean, modern look and feel of the dashboard
 and wanted to use it as a base for my personal projects.
 */
 
-
 /* Color Palette */
 :root 
 {
@@ -22,7 +21,7 @@ and wanted to use it as a base for my personal projects.
   --dark-gray: #595959;
 }
 
-/* Fonts */
+/* Base Styles */
 body, html 
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -30,6 +29,31 @@ body, html
   color: #000;
   margin: 0;
   padding: 0;
+}
+
+h1
+{
+  font-size: 2.1rem;
+  font-weight: bold;
+  color: var(--blue);
+  margin: 1rem 20px;
+  text-align: center;
+}
+
+h2
+{
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--light-blue);
+  margin: 0.5rem 20px 0.5rem 20px;
+}
+
+p
+{
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0.5rem 20px;
+  text-align: center;
 }
 
 /* Navigation Bar Styles */
@@ -62,21 +86,32 @@ body, html
   text-decoration: none;
 }
 
-/* Remove the pipe separator for a cleaner look */
-.main-nav .nav-link + .nav-link::before 
+/* Interactive Content Sections */
+section 
 {
-  content: "";
+  margin: 1.5rem 20px;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
 section:hover 
 {
   background-color: var(--light-gray);
-  transition: background 0.2s;
-  border-radius: 12px;
 }
 
-@media (max-width: 700px) 
-{
+/* I needed to reduce the top margin for h2 inside sections */
+section h2 {
+  margin-top: 0;
+}
+
+/* I had to add some very small spacing between bullet points.  They looked odd. */
+li {
+  margin-bottom: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 700px) {
   .main-nav 
   {
     flex-direction: column;
@@ -84,6 +119,7 @@ section:hover
     gap: 0.5rem;
     padding: 0.5rem 0;
   }
+  
   .main-nav .nav-link 
   {
     font-size: 1rem;
@@ -92,6 +128,10 @@ section:hover
     text-align: center;
     border-radius: 0;
   }
+  
+  section {
+    margin: 1.5rem 10px;
+  }
 }
 
 @media (max-width: 400px) 
@@ -99,5 +139,9 @@ section:hover
   .main-nav .nav-link {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
+  }
+  
+  section {
+    margin: 1.5rem 5px;
   }
 }

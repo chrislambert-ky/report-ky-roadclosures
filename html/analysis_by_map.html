@@ -40,61 +40,44 @@
 // The following Leaflet map is based on their Quick Start example.
 // I just had to fetch my data and start customizing the content.
 // The performance was horrible with 10,000+ markers, so I used the Leaflet.markercluster plugin.
-// They have a lot of documentation at: https://leafletjs.com/reference.html
-// Clustering docs can be found here: https://github.com/Leaflet/Leaflet.markercluster
-
 
 // Create the map and set the initial view to Kentucky
-const map = L.map('map').setView([37.822295, -85.76819], 7); // Centered on Kentucky
+const map = L.map('map').setView([37.822295, -85.76819], 7);
 
-// Add OpenStreetMap tiles as the base map layer (example default)
-const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// Add OpenStreetMap tiles as the base map layer
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
 // Create a marker cluster group to efficiently display thousands of points
 const markers = L.markerClusterGroup({
-    maxClusterRadius: 60, // default is 80, lower = tighter clusters
-    disableClusteringAtZoom: 12 // clusters disappear at zoom 12
+    maxClusterRadius: 60,
+    disableClusteringAtZoom: 12
 });
-// 4. Fetch the road closure data from the JSON file
+
+// Fetch the road closure data and add markers to the map
 fetch('../data/data_v4_final_roadclosures.json')
   .then(response => response.json())
   .then(data => {
-    // Loop through each closure record in the dataset
+    // Loop through each closure and create a marker
     data.forEach(closure => {
-      // Look for laitude and longitude fields in the closure record
-      if (closure.latitude && closure.longitude) {
-        // Create a marker for the closure location
-        const marker = L.marker([
-          parseFloat(closure.latitude),
-          parseFloat(closure.longitude)
-        ]);
-        // Popup settings
-        marker.bindPopup(
-          `<b>${closure.Road_Name || closure.Route || 'Unknown Road'}</b><br>
-           ${closure.Comments || ''}<br>
-           <b>County:</b> ${closure.County_Name || ''}<br>
-           <b>Reported:</b> ${closure.Reported_On || ''}<br>
-           <b>Duration (hrs):</b> ${closure.Duration_Hours || ''}`
-        );
-        // Add the marker to the cluster group
-        markers.addLayer(marker);
-      }
+      const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
+      // Set up the popup that shows when you click a marker
+      marker.bindPopup(
+        `<b>${closure.Road_Name}</b><br>
+         ${closure.Comments}<br>
+         <b>County:</b> ${closure.County_Name}<br>
+         <b>Reported:</b> ${closure.Reported_On}<br>
+         <b>Duration (hrs):</b> ${closure.Duration_Hours}`
+      );
+      markers.addLayer(marker);
     });
-    // Add the cluster group to the map
+    // Add all the markers to the map at once
     map.addLayer(markers);
-  })
-  .catch(error => {
-    // Log any errors that occur during fetch or processing
-    console.error('Error fetching or displaying road closures data:', error);
   });
 
 </script>
-
-
-
 
 </body>
 </html>

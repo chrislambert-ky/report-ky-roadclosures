@@ -1,0 +1,16 @@
+// Data fetch and reorder
+const jsonPath = '../data/data_v4_final_roadclosures.json';
+// Use the existing columns in this order
+const columnOrder = [
+  "District_Number",
+  "County_Name",
+  "Route_Label",
+  "Road_Name",
+  "Milepoint",
+  "Reported_On",
+  "End_Date",
+  "Duration_Hours",
+  "Comments",
+  "latitude",
+  "longitude"
+];

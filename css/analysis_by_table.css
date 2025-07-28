@@ -4,7 +4,6 @@ for my official PowerBI reports on KYTC TRAK (https://trak.kytc.ky.gov/)
 I like the clean, modern look and feel of the dashboard 
 and wanted to use it as a base for my personal projects.
 */
- 
 
 /* Color Palette */
 :root 
@@ -22,7 +21,7 @@ and wanted to use it as a base for my personal projects.
   --dark-gray: #595959;
 }
 
-/* Fonts */
+/* Base Styles */
 body, html 
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -41,6 +40,7 @@ h1
   margin: 1rem 0;
   text-align: center;
 }
+
 h2
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -78,11 +78,37 @@ h2
   text-decoration: none;
 }
 
-/* Remove the pipe separator for a cleaner look */
-.main-nav .nav-link + .nav-link::before {
-  content: "";
+/* Download Button Styles */
+.font-bold {
+  font-weight: bold;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
 }
 
+.font-bold:hover {
+  background: var(--light-blue);
+  transform: translateY(-1px);
+}
+
+.font-bold:active {
+  transform: translateY(0);
+}
+
+/* AG Grid Container Styles */
+#aggrid-table-container {
+  margin: 2rem 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
 @media (max-width: 700px) {
   .main-nav {
     flex-direction: column;
@@ -90,6 +116,7 @@ h2
     gap: 0.5rem;
     padding: 0.5rem 0;
   }
+  
   .main-nav .nav-link {
     font-size: 1rem;
     padding: 0.5rem 1rem;
@@ -97,11 +124,24 @@ h2
     text-align: center;
     border-radius: 0;
   }
+  
+  #aggrid-table-container {
+    margin: 2rem 10px;
+  }
 }
 
 @media (max-width: 400px) {
   .main-nav .nav-link {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
+  }
+  
+  .font-bold {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+  }
+  
+  #aggrid-table-container {
+    margin: 2rem 5px;
   }
 }

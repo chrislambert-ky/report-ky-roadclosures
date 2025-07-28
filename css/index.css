@@ -5,7 +5,7 @@ I like the clean, modern look and feel of the dashboard
 and wanted to use it as a base for my personal projects.
 */
 
-/* These are my primary colors */
+/* Color Palette */
 :root 
 {
   --blue: #003764;
@@ -21,8 +21,7 @@ and wanted to use it as a base for my personal projects.
   --dark-gray: #595959;
 }
 
-
-/* I want to use Arial as my primary font */
+/* Base Styles */
 body, html 
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -41,6 +40,7 @@ h1
   margin: 1rem 0;
   text-align: center;
 }
+
 h2
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -51,8 +51,7 @@ h2
   text-align: center;
 }
 
-/* Image Grid Styles */
-
+/* Dashboard Image Grid */
 .image-grid 
 {
   display: grid;
@@ -103,37 +102,7 @@ h2
   margin: 0;
 }
 
-@media (max-width: 900px) 
-{
-  .image-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-}
-
-@media (max-width: 600px) 
-{
-  .image-grid 
-  {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .image-grid a 
-  {
-    width: 90vw;
-    height: 180px;
-    padding: 1rem 0.5rem;
-  }
-  .image-grid img 
-  {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-
 /* Navigation Bar Styles */
-
 .main-nav 
 {
   background: var(--light-gray);
@@ -163,7 +132,15 @@ h2
   text-decoration: none;
 }
 
-/* Responsive Navigation Bar */
+/* Responsive Design */
+@media (max-width: 900px) 
+{
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 700px) 
 {
   .main-nav 
@@ -180,6 +157,26 @@ h2
     width: 100%;
     text-align: center;
     border-radius: 0;
+  }
+}
+
+@media (max-width: 600px) 
+{
+  .image-grid 
+  {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .image-grid a 
+  {
+    width: 90vw;
+    height: 180px;
+    padding: 1rem 0.5rem;
+  }
+  .image-grid img 
+  {
+    width: 60px;
+    height: 60px;
   }
 }
 
