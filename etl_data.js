@@ -8,12 +8,16 @@
 //    - SQL (Google BigQuery, Oracle)
 //    - BI Tools (Looker Studio, Tableau, PowerBI).
 // This is my first attempt at writing a Node.js ETL script.
-// This script is co-written by GitHub CoPilot, GPT 4.1 using the autocomplete feature.
+
+// AI Use
+// See the README.md file for details on how I used AI to develop this script.
 
 // GOAL:
 // This script aims to reprocess historic road closure data for analysis and reporting purposes.
 // This data will eventually support the Dashboards that are the main focus of this project.
 // This particular script attempts to recreate a python based ETL (extract, transform, and load) process.
+// Since roadway information changes over time, I need to re-process the data with more recent attributes.
+// I want to ensure that people can review historic data in the most recent context.
 
 // METHODOLOGY:
 // I'm going to break down my ETLs into steps for my own peace of mind.
@@ -21,22 +25,6 @@
 // Step 2: Fetch, parse, and filter fields/columns, and save to 'data_v2_parsed_filtered_data.json'.
 // Step 3: Fetch, parse, filter, and geo-enrich using the KYTC API, and store as 'data_v3_reprocessed_dataset.json'.
 // Step 4: Fetch, parse, filter, reprocess, add etl logging results, and store the data for final output as 'data_v4_final_roadclosures.json'.
-
-// NOTES:
-// The data being retrieved is historic road closure data.
-// Since roadway information changes over time, I need to re-process the data with more recent attributes.
-// I want to ensure that people can review historic data in the most recent context.
-
-// AI Use
-// This script was first documented by me and then I prompted GitHub Copilot
-// to add comments so that others can better understand the ETL process 
-// and use this script as a learning tool.
-// (Not to mention reminding me how it works after I walk away).
-
-// I was also forced to use AI to help me with the errors
-// I kept trying to feed the entire 10k records to the API and it kept locking up.
-// I spoke with the API developer but they didn't know Javascript and couldn't help me.
-// I needed Copilot Agentic mode to get me through it.
 
 
 // =========================
@@ -93,9 +81,12 @@ function filterRows(csvText)
 // The API documentation is: https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs
 
 // DISCLAIMER: 
+// Again, please review the AI disclaimer on my README.md file.
+// This function was the most challenging part of the ETL process.
+// Even using various AI tools, I struggled to get this working.
 // This was very tricky for me. I simply did not have time to troubleshoot the problem.
 // I spoke with the API developer but they didn't know Javascript and couldn't help me.
-// Working with this API took a considerable amount of trial and error.
+// Working with this API took a considerable amount of trial and error (several hours over multiple sessions)
 // I had to rely on GitHub CoPilot to help me with the errors.
 // GitHub Copilot in Agentic mode helped me with this after I struggled with the API locking up.
 

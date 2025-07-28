@@ -66,6 +66,10 @@ This document started as a project outline but I'm updating the document as a I 
 
 ## Getting Started
 
+**Requirements:**
+- Node.js v18 or newer is recommended
+- Internet connection is required to fetch source data and call the KYTC API
+
 1. **Clone the Repository**
    ```bash
    git clone https://github.com/chrislambert-ky/report-ky-roadclosures.git
@@ -84,14 +88,13 @@ This document started as a project outline but I'm updating the document as a I 
      ```
    - This will execute `etl_data.js` and generate a `./data/data_v4_final_roadclosures.json` file containing the fully processed and enriched dataset.
 
-**Requirements:**
-- Node.js v18 or newer is recommended
-- Internet connection is required to fetch source data and call the KYTC API
-
 **Data Retrieval, Storage, and Integration**
 - The ETL pipeline reprocesses historic road closure data using the KYTC API, ensuring all records have the most up-to-date roadway attributes
 - The pipeline can be automated (e.g., with GitHub Actions) to keep the dashboard data current
 
+**AI Use:  etl_data.js**
+- The 'etl_data.js' script reqired the use of GitHub CoPilot.  I started development by using the default autocomplete feature(s) of VS Code but was forced to use AI quite a bit to troubleshoot API errors.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I spoke with the API developer but they didn't know Javascript and couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through the 'etl_data.js' script.  I have not found another way to develop the 'etl_data.js' script.  Even after it was developed, I asked different AI bots to optomize the code and they all failed.  Each one makes modifications that throw more errors.  Once I got it working, I wasn't going to change it.
+- I used GitHub Copilot again to help with the documentation of 'etl_data.js'.  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script and then I prompted GitHub Copilot to add comments so that others can better understand the ETL process and use this script as a learning tool.
 
 # Under Development
 
@@ -102,9 +105,3 @@ The following items are still being improved or are planned for future releases:
 - Add more advanced filtering
 - All dashboard pages support dynamic dropdown filters (District, County, Route Type, Year, etc.) populated from the data
 - Filters update charts and map in real time
-
-**Testing & Feedback**
-- Gather and incorporate user feedback
-
-**Documentation**
-- Continue to update and expand documentation as features are added
