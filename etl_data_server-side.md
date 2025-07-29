@@ -24,8 +24,6 @@ As the historic data set grows, a dedicated ETL pipeline is used to fetch, parse
 ### 3. **Enrich**
 - For each record, calls the [KYTC Route API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) to obtain updated roadway attributes (District, County, Route, Road Name, Milepoint, etc.) using the latitude and longitude from the source data.
 - Source attributes and new attributes are joined to create a full dataset with the most recent roadway values.
-- Future versions will perform this process in batches of 200, requiring much less time.
-
 
 ### 4. **Store**
 - Writes the enriched data to `./data/data_v4_final_roadclosures.json`, overwriting any previous output.
@@ -36,14 +34,14 @@ As the historic data set grows, a dedicated ETL pipeline is used to fetch, parse
 ## Additional Implementation Details
 
 - **Batch Processing:**
+  - Future versions will perform batch processing of records against the API.
   - The batch size is set to 200 records per API call group to avoid API timeouts and rate limits.
-  - After each batch, the output file is updated, so progress is not lost.
 
 - **No API Key Required:**
   - The KYTC API is public and does not require registration or authentication.
 
 - **Related Example Files:**
-  - `docs_js/kytc_route_api_keys.csv` (example API keys, not required for this ETL)
+  - `docs_js/kytc_route_api_keys.csv` (example API keys)
   - `docs_js/kytc_route_api_py_async.py` and `docs_js/kytc_route_api_py_sync.py` (Python examples for the same API)
 
 - **Not Official:**
