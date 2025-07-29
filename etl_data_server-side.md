@@ -12,7 +12,7 @@ As the historic data set grows, a dedicated ETL pipeline is used to fetch, parse
 
 ---
 
-## ETL Pipeline Steps (as implemented in `etl_data.js`)
+## ETL Pipeline Steps
 
 ### 1. **Extract**
 - Downloads the latest historic road closure data from a [hosted CSV source](https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv) using `node-fetch`.
@@ -22,8 +22,10 @@ As the historic data set grows, a dedicated ETL pipeline is used to fetch, parse
 - Retain only the fields that cannot be reprocessed or updated by the enrichment API.
 
 ### 3. **Enrich**
-- For each record, calls the [KYTC Route API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) to obtain updated roadway attributes (District, County, Milepoint, Road Name, Route, etc.) using latitude and longitude.
-- Enrichment is performed in batches (default batch size: **200** as set in the script) to avoid overloading the API and to allow for progress tracking and partial saves.
+- For each record, calls the [KYTC Route API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) to obtain updated roadway attributes (District, County, Route, Road Name, Milepoint, etc.) using the latitude and longitude from the source data.
+- Source attributes and new attributes are joined to create a full dataset with the most recent roadway values.
+- Future versions will perform this process in batches of 200, requiring much less time.
+
 
 ### 4. **Store**
 - Writes the enriched data to `./data/data_v4_final_roadclosures.json`, overwriting any previous output.

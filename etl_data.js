@@ -61,7 +61,7 @@ async function enrichRow(row)
   // The enriched roadway attributes are inside of snap.Route_Info object.
   // This is like the class example we had about the car (finding Toyota.Corolla).
   
-    const info = snap.Route_Info || {};
+  const info = snap.Route_Info || {};
   return {
     latitude: row.latitude,
     longitude: row.longitude,
