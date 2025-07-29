@@ -1,5 +1,5 @@
 # Project Outline: Interactive Report for Road Closures
-This document started as a project outline but I'm updating the document as a I complete work on the project.
+This document started as a project outline for [Code:You](https://code-you.org/) but I have been updating the document as a I complete work on the project.
 
 ## Introduction
 
@@ -21,6 +21,38 @@ This document started as a project outline but I'm updating the document as a I 
 - [Leaflet](https://leafletjs.com/)
 - [AG Grid](https://www.ag-grid.com/javascript-data-grid/getting-started/)
 - [Free Icons org](https://www.freeicons.org/)
+
+
+## [Code:You](https://code-you.org/) Capstone Requirements Covered in This Project ##
+
+- **Complete (Rating: Easy)** Analyze data that is stored in arrays, objects, sets or maps and display information about it in your app.<br>
+**Demonstrated in:**
+  - Analysis by Count
+  - Analysis by Duration
+  - Map View
+  - Table View
+- **Complete (Rating:Easy)** Create a function that accepts two or more input parameters and returns a value that is calculated or determined by the inputs.  Basic math functions don’t count (e.g. addition, etc).<br>
+**Demonstrated in:**
+  - [`etl_data.js`](./etl_data.js)
+  - [Analysis by Count](./html/analysis_by_count.html)
+  - [Analysis by Duration](./html/analysis_by_duration.html)
+- **Complete (Rating: Easy/Intermediate)** Visualize data in a user friendly way. (e.g. graph, chart, etc).  This can include using libraries like ChartJS<br>
+**Demonstrated in:**
+  - [Analysis by Count](./html/analysis_by_count.html)
+  - [Analysis by Duration](./html/analysis_by_duration.html)
+  - [Map View](./html/analysis_by_map.html)
+  - [Table View](./html/analysis_by_table.html)
+- **Complete (Intermediate)** Calculate and display data based on an external factor (ex: get the current date, and display how many days remaining until some event)<br>
+**Demonstrated in:**
+  - [`etl_data.js`](./etl_data.js)
+- **Complete (Intermediate/Hard)** Persist data to an internal API and make the stored data accessible in your app. (including after reload/refresh).  This can be achieved either by using local storage or building your own API that stores data into a JSON file.<br>
+**Demonstrated in:**
+  - [`etl_data.js`](./etl_data.js)
+- **Comlpete (Rating: Easy/Intermediate)** Implement modern interactive UI features (e.g. table/data sorting, autocomplete, drag-and-drop, calendar-date-picker, etc).<br>
+**Demonstrated in:**
+  - [Map View](./html/analysis_by_map.html)
+  - [Table View](./html/analysis_by_table.html)
+
 
 
 ## Getting Started
@@ -45,7 +77,7 @@ This document started as a project outline but I'm updating the document as a I 
      ```bash
      npm start
      ```
-   - This will execute `etl_data.js` and generate a `./data/data_v4_final_roadclosures.json` file containing the fully processed and enriched dataset.
+   - This will execute [`etl_data.js`](/etl_data.js) and generate a [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json) file containing the fully processed and enriched dataset.
 
 **Notes: Data Retrieval, Storage, and Integration**
 - The current version will take quite some time to run since it processes one record per call.  To help with this, I setup a github action that runs each night so you should receive a working dataeet as part of the clone process.
@@ -54,7 +86,7 @@ This document started as a project outline but I'm updating the document as a I 
 ## Core Features
 
 #### Back-End / Server-Side ETL & Data Processing
-- Fetch CSV formatted data from a GitHub repo
+- Fetch [CSV formatted data](https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv) from my Python based [Road Closure Analysis](https://github.com/chrislambert-ky/analysis-ky-roadclosures) GitHub repo.
 - Parses source dataset to retain only unique fields
   - Latitude
   - Longitude
@@ -62,7 +94,7 @@ This document started as a project outline but I'm updating the document as a I 
   - Reported_On
   - End_Date
   - Duration_Hours
-- Reprocess unique values using (lat, long) using the **KYTC Route API** to add updated values for the following items:
+- Reprocess unique values using (lat, long) using the **[KYTC Route API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs)** to add updated values for the following items:
   - District
   - County
   - Route
@@ -71,7 +103,7 @@ This document started as a project outline but I'm updating the document as a I 
   - Road Name
   - Milepoint
   - Snap Status
-- Output written to `./data/data_v4_final_roadclosures.json` after each batch
+- Output written to [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json) after each batch
 
 #### Web Design: Interactive Dashboards
 - Responsive site design using CSS Grid and Flexbox
@@ -87,9 +119,9 @@ This document started as a project outline but I'm updating the document as a I 
 
 ## Under Development
 The following items are still being improved or are planned for future releases:
-- **Deploy `etl_data_ai.js`** for more efficient API calls.
-  - **(coming soon: after capstone)** Batch processing (100 records per batch) to avoid API overload
-  - **(coming soon: after capstone)** Error handling: API errors and missing data are logged in the output
+- **Deploy [`js/etl_data_ai.js`](./js/etl_data_ai.js)** for more efficient API calls.
+  - **(coming soon)** Batch processing (100 records per batch) to avoid API overload
+  - **(coming soon)** Error handling: API errors and missing data are logged in the output
 - Continue to enhance dashboard UI/UX and interactivity
   - Add more advanced filtering for apache echart graphs.
   - Add multiple graphs per page, aligning more closely with BI solutions.
@@ -97,7 +129,6 @@ The following items are still being improved or are planned for future releases:
   - Add pivot table functionality for table view users.
 
 ## AI Use Disclaimer:
-- The current `etl_data.js` script is my own work.  After reading the Code:You AI policy, I felt like I should revert back to the current version which is a better representation of my work.  And when I say my own work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate function into Javascript, and even ask questions of coworkers/developers.
-- The `js/etl_data_ai.js` script, which I will deploy after the capstone, reqired the use of GitHub CoPilot.  I was forced to use AI quite a bit to troubleshoot API errors.  My issue was the API and sending records in batches.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he doesn't know Javascript and couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the `js/etl_data_ai.js` script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
-- I used GitHub Copilot again to help with the documentation of `js/etl_data_ai.js`.  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
-- For the assignment, I have reverted back to one of my original iterations for `etl_data.js` that performs one API call per record.  After the capstone, I will redeploy the AI version since it is more efficient and heavily documented.
+- The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the Code:You AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
+- The [`js/etl_data_ai.js`](./js/etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I was forced to use AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`js/etl_data_ai.js`](./js/etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
+- I used GitHub Copilot again to help with the documentation of [`js/etl_data_ai.js`](./js/etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
