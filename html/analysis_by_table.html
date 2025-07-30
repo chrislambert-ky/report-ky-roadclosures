@@ -55,15 +55,15 @@ fetch('../data/data_v4_final_roadclosures.json')
     // Define the columns we want and how they should look
     const columnDefs = 
     [
-      { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true },
+      { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true,},
       { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
-      { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true },
-      { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true },
+      { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'} },
+      { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true,valueFormatter: params => Number(params.value).toFixed(2), cellStyle: {textAlign: 'center'}  }, // adding rounding for readability
       { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
       { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
-      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true },
-      { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true },
-      { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true },
+      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
+      { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
+      { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2)}, // adding rounding for readability
       { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
     ];
     

@@ -46,8 +46,8 @@ fetch('../data/data_v4_final_roadclosures.json')
     
     // Convert to arrays for chart - ECharts needs arrays not objects
     const years = Object.keys(yearDurations).sort();
-    const durations = years.map(year => yearDurations[year]);
-    
+    const durations = years.map(year => yearDurations[year].toFixed(2)); // adding rounding for readability
+
     // Set up the chart configuration
     const option = {
       tooltip: 
