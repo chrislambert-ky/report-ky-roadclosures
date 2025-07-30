@@ -1,9 +1,11 @@
 # Project Outline: Interactive Report for Road Closures
-This document started as a project outline for [Code:You](https://code-you.org/) but I have been updating the document as a I complete work on the project.
+
+- This document started as a project outline for [Code:You](https://code-you.org/) but I have updating the document as a I complete work on the project.<br>
+- In addition to the GitHub Repo [report-ky-roadclosures](https://github.com/chrislambert-ky/report-ky-roadclosures), I've also setup a [GitHub Page](https://pages.github.com/) site called [report-ky-roadclosures](https://chrislambert-ky.github.io/report-ky-roadclosures/).  The data displayed on this site will update each night at 12:30am using [GitHub Actions](https://github.com/features/actions)<br>
 
 ## Introduction
 
-**Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the Kentucky Transportation Cabinet.  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet spatial API, and then produce an interactive, responsive, website that provides business intelligence capabilities.
+**Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the [Kentucky Transportation Cabinet](https://transportation.ky.gov/Pages/Home.aspx).  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet [Spatial API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs), and then produce an interactive, responsive, website that provides business intelligence capabilities.
 
 **Objective:**
   - Retrieve csv formatted road closure data from a github repo.
