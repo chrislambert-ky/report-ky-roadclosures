@@ -61,7 +61,7 @@ fetch('../data/data_v4_final_roadclosures.json')
       { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true,valueFormatter: params => Number(params.value).toFixed(2), cellStyle: {textAlign: 'center'}  }, // adding rounding for readability
       { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
       { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
-      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
+      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}, sort: 'desc', sortindex: 0 }, // default sort by most recent
       { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
       { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2)}, // adding rounding for readability
       { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
@@ -143,5 +143,12 @@ function downloadCSV(csv, filename) {
   URL.revokeObjectURL(url);
 }
 </script>
+<section>
+  <p><b>Please note:</b> This table represents a daily snapshot of real-time data via a batch process.<br>
+    "Reported On" and "End Date" are obtained through an aggregation of <b>min(timestamp)</b> and <b>max(timestamp)</b>.<br>
+    Events that are ongoing will typically display an "End Date" of Midnight (00:00), since the data is exported at Midnight EST.<br>
+    </p>
+
+</section>
 </body>
 </html>
