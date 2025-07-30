@@ -29,10 +29,10 @@
 
 - **Complete (Rating: Easy)** Analyze data that is stored in arrays, objects, sets or maps and display information about it in your app.<br>
 **Demonstrated in:**
-  - Analysis by Count
-  - Analysis by Duration
-  - Map View
-  - Table View
+  - [Analysis by Count](./html/analysis_by_count.html)
+  - [Analysis by Duration](./html/analysis_by_duration.html)
+  - [Map View](./html/analysis_by_map.html)
+  - [Table View](./html/analysis_by_table.html)
 - **Complete (Rating:Easy)** Create a function that accepts two or more input parameters and returns a value that is calculated or determined by the inputs.  Basic math functions don’t count (e.g. addition, etc).<br>
 **Demonstrated in:**
   - [`etl_data.js`](./etl_data.js)
