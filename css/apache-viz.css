@@ -1,6 +1,7 @@
 /* 
 After having problems with CSS, I decided to create a new CSS for each HTML file. 
 I know that isn't optimal, but I wanted to keep the styles separate for clarity.
+Now that I have a better understanding of CSS, I have at least combined the CSS for the Apache eCharts.
 */
 
 
@@ -11,7 +12,6 @@ I like the clean, modern look and feel of the dashboard
 and wanted to use it as a base for my personal projects.
 */
 
-/* Color Palette */
 :root 
 {
   --blue: #003764;
@@ -27,7 +27,6 @@ and wanted to use it as a base for my personal projects.
   --dark-gray: #595959;
 }
 
-/* Base Styles */
 body, html 
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -57,7 +56,6 @@ h2
   text-align: center;
 }
 
-/* Navigation Bar Styles */
 .main-nav 
 {
   background: var(--light-gray);
@@ -87,7 +85,6 @@ h2
   text-decoration: none;
 }
 
-/* Responsive Design */
 @media (max-width: 700px) 
 {
   .main-nav {

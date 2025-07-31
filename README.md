@@ -121,9 +121,9 @@
 
 ## Under Development
 The following items are still being improved or are planned for future releases:
-- **Deploy [`js/etl_data_ai.js`](./js/etl_data_ai.js)** for more efficient API calls.
-  - **(coming soon)** Batch processing (100 records per batch) to avoid API overload
-  - **(coming soon)** Error handling: API errors and missing data are logged in the output
+-- **Deploy [`etl_data_ai.js`](etl_data_ai.js)** for more efficient API calls.
+  - Batch processing (100 records per batch) to avoid API overload
+  - Error handling: API errors and missing data are logged in the output
 - Continue to enhance dashboard UI/UX and interactivity
   - Add more advanced filtering for apache echart graphs.
   - Add multiple graphs per page, aligning more closely with BI solutions.
@@ -131,6 +131,6 @@ The following items are still being improved or are planned for future releases:
   - Add pivot table functionality for table view users.
 
 ## AI Use Disclaimer:
-- The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the Code:You AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
-- The [`js/etl_data_ai.js`](./js/etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I was forced to use AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`js/etl_data_ai.js`](./js/etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
-- I used GitHub Copilot again to help with the documentation of [`js/etl_data_ai.js`](./js/etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
+- The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the [Code:You](https://code-you.org/) AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
+-- The [`etl_data_ai.js`](etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I used AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`etl_data_ai.js`](etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
+- I used GitHub Copilot again to help with the documentation of [`etl_data_ai.js`](etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."

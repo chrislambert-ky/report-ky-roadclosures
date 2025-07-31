@@ -1,8 +1,23 @@
+// DISCLAIMERS:
+// I do work for the Kentucky Transportation Cabinet but this is not an official KYTC project.
+// This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc)
+// I am not a professional software developer.
+// My background is:
+//    - IT Project Manager / Data Analyst / Highways Subject Matter Expert
+//    - Python ETLs
+//    - SQL (Google BigQuery, Oracle)
+//    - BI Tools (Looker Studio, Tableau, PowerBI).
+// This is my first attempt at writing a Node.js ETL script.
+
+
 // After reading the AI policy, I decided to revert back to my original script.
 // The other script is much faster and better at handling errors but this script is my work.
 // The AI assisted ETL script (in the /js folder) will be used after class.
+
 // Chris Lambert
 // Date: July 2025
+
+
 
 // home pc is setup to use ES6 modules
 import fetch from 'node-fetch';
