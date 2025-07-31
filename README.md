@@ -1,4 +1,20 @@
-# Project Outline: Interactive Report for Road Closures
+# Interactive Report for Road Closures
+
+### Personal Disclaimer:
+- _While I am an employee of the Kentucky Transportation Cabinet, this analysis of road closure data is not an official KYTC analysis.  This project exists for me to learn and grow my skills in web development (HTML, CSS, Javascript)._
+- _My background is in:_
+  - IT Project Manager / Data Analyst
+  - SQL (Google BigQuery, Oracle)
+  - BI Tools (Looker Studio, Tableau, PowerBI).
+  - Python ETLs
+### Data Disclaimer:
+- _There are many factors that contribute to road closures that are not disclosed in this dataset. This dataset is not a complete or comprehensive list of all road closures and/or damaged roadways.  These are only the reports that were verified by the Transportatioin Operatations Center in real-time and displayed on the GoKY website. As an employee of KYTC, I want to promote safety and mobility for everyone and I would encourage you to please utilize the following resources:_<br>
+- **_"Know before you go" Real-Time Traveler Information can be found at [GoKY](https://goky.ky.gov)_**
+- **_KYTC also shares real-time data with [Waze](https://www.waze.com/en/live-map/)._**
+
+**-_Chris Lambert_**
+
+### Project Outline:
 
 - This document started as a project outline for [Code:You](https://code-you.org/) but I have updating the document as a I complete work on the project.<br>
 - In addition to the GitHub Repo [report-ky-roadclosures](https://github.com/chrislambert-ky/report-ky-roadclosures), I've also setup a [GitHub Page](https://pages.github.com/) site called [report-ky-roadclosures](https://chrislambert-ky.github.io/report-ky-roadclosures/).  The data displayed on this site will update each night at 12:30am using [GitHub Actions](https://github.com/features/actions)<br>
@@ -134,3 +150,4 @@ The following items are still being improved or are planned for future releases:
 - The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the [Code:You](https://code-you.org/) AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
 -- The [`etl_data_ai.js`](etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I used AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`etl_data_ai.js`](etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
 - I used GitHub Copilot again to help with the documentation of [`etl_data_ai.js`](etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
+
