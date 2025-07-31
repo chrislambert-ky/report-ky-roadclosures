@@ -144,9 +144,12 @@ function downloadCSV(csv, filename) {
 }
 </script>
 <section>
-  <p><b>Please note:</b> This table represents a daily snapshot of real-time data via a batch process.<br>
-    "Reported On" and "End Date" are obtained through an aggregation of <b>min(timestamp)</b> and <b>max(timestamp)</b>.<br>
-    Events that are ongoing will typically display an "End Date" of Midnight (00:00), since the data is exported at Midnight EST.<br>
+  <p><b>UNDERSTAND THE DATA:</b> 
+    This table represents a daily snapshot from a real-time decision support system.<br>
+    The real-time system processes data on Kentucky roadways every 2 minutes.  <br>
+    <b>"Reported On"</b> and <b>"End Date"</b> are obtained through an aggregation of <b>min(timestamp)</b> and <b>max(timestamp)</b>.<br>
+    Events that are ongoing will typically display with "End Date" of Midnight (00:00) from the previous day's date<br>
+    since the last known occurrence for that road closure was processed at Midnight (00:00) EST.<br>
     </p>
 
 </section>
