@@ -66,7 +66,7 @@
 - **Complete (Intermediate/Hard)** Persist data to an internal API and make the stored data accessible in your app. (including after reload/refresh).  This can be achieved either by using local storage or building your own API that stores data into a JSON file.<br>
 **Demonstrated in:**
   - [`etl_data.js`](./etl_data.js)
-- **Comlpete (Rating: Easy/Intermediate)** Implement modern interactive UI features (e.g. table/data sorting, autocomplete, drag-and-drop, calendar-date-picker, etc).<br>
+- **Complete (Rating: Easy/Intermediate)** Implement modern interactive UI features (e.g. table/data sorting, autocomplete, drag-and-drop, calendar-date-picker, etc).<br>
 **Demonstrated in:**
   - [Map View](./html/analysis_by_map.html)
   - [Table View](./html/analysis_by_table.html)
