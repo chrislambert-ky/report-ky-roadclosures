@@ -39,9 +39,142 @@
         <h1>Interactive Analysis of KY Road Closures: by Location</h1>
         <h2>Data refreshes daily 12:30am EST</h2>
     </div>
+
+
+<div style="text-align: center;">
+  <div class="dropdown-filter-menus" style="display: inline-block;">
+
+  <label for="yearFilter">Year:</label>
+  <select id="yearFilter">
+    <option value="">All Years</option>
+    <!-- Options will be populated dynamically -->
+  </select>
+  <label for="districtFilter">District:</label>
+  <select id="districtFilter">
+    <option value="">All Districts</option>
+    <!-- Options will be populated dynamically -->
+  </select>
+  <label for="countyFilter">County:</label>
+  <select id="countyFilter">
+    <option value="">All Counties</option>
+    <!-- Options will be populated dynamically -->
+  </select>
+
+  <button id="clearFiltersBtn" style="margin-left: 16px;">Clear Filters</button>
+
+  <script>
+  // --- Dynamic Dropdowns and Map Filtering ---
+  // These variables will be used by the main script as well
+  let allData = [];
+  let filteredData = [];
+
+  function getUnique(arr, keyFn) {
+    return [...new Set(arr.map(keyFn))].sort();
+  }
+
+  function getYear(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return isNaN(d) ? '' : d.getFullYear().toString();
+  }
+
+  function populateDropdown(id, options, label) {
+    const select = document.getElementById(id);
+    select.innerHTML = `<option value="">All ${label}</option>` +
+      options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+  }
+
+  function filterData() {
+    const year = document.getElementById('yearFilter').value;
+    const district = document.getElementById('districtFilter').value;
+    const county = document.getElementById('countyFilter').value;
+    filteredData = allData.filter(item => {
+      const itemYear = getYear(item.Reported_On);
+      return (!year || itemYear === year) &&
+             (!district || String(item.District_Number) === district) &&
+             (!county || item.County_Name === county);
+    });
+  }
+
+  function updateDropdowns() {
+    // After filtering, get valid options for each dropdown
+    const yearSet = getUnique(filteredData, item => getYear(item.Reported_On));
+    let districtSet = getUnique(filteredData, item => String(item.District_Number));
+    districtSet = districtSet.sort((a, b) => Number(a) - Number(b));
+    const countySet = getUnique(filteredData, item => item.County_Name);
+    populateDropdown('yearFilter', yearSet, 'Years');
+    populateDropdown('districtFilter', districtSet, 'Districts');
+    populateDropdown('countyFilter', countySet, 'Counties');
+  }
+
+  function updateMapMarkers() {
+    if (typeof markers !== 'undefined') {
+      markers.clearLayers();
+      filteredData.forEach(closure => {
+        if (closure.latitude && closure.longitude) {
+          const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
+          marker.bindPopup(
+            `<b>${closure.Road_Name}</b><br>` +
+            `${closure.Comments}<br>` +
+            `<b>County:</b> ${closure.County_Name}<br>` +
+            `<b>Reported:</b> ${closure.Reported_On}<br>` +
+            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
+          );
+          markers.addLayer(marker);
+        }
+      });
+    }
+  }
+
+  function onFilterChange(e) {
+    // Save current selections
+    const prev = {
+      year: document.getElementById('yearFilter').value,
+      district: document.getElementById('districtFilter').value,
+      county: document.getElementById('countyFilter').value
+    };
+    filterData();
+    updateDropdowns();
+    // Restore previous selection if still valid
+    if (prev.year) document.getElementById('yearFilter').value = prev.year;
+    if (prev.district) document.getElementById('districtFilter').value = prev.district;
+    if (prev.county) document.getElementById('countyFilter').value = prev.county;
+    filterData(); // filter again in case dropdowns changed
+    updateMapMarkers();
+  }
+
+  // Wait for DOM and map to be ready
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('../data/data_v4_final_roadclosures.json')
+      .then(response => response.json())
+      .then(data => {
+        allData = data;
+        filteredData = data;
+        updateDropdowns();
+        updateMapMarkers();
+        // Add event listeners
+        ['yearFilter', 'districtFilter', 'countyFilter'].forEach(id => {
+          document.getElementById(id).addEventListener('change', onFilterChange);
+        });
+        // Clear Filters button
+        document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+          document.getElementById('yearFilter').value = '';
+          document.getElementById('districtFilter').value = '';
+          document.getElementById('countyFilter').value = '';
+          filterData();
+          updateDropdowns();
+          updateMapMarkers();
+        });
+      });
+  });
+  </script>
+  </div>
+</div>
+
     <div style="text-align: center;">
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
+
 <script>
 
 // Leaflet Map
