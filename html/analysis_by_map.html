@@ -209,32 +209,46 @@
       window.nonClusterMarkers = [];
       const selectedCounty = document.getElementById('countyFilter').value;
       if (selectedCounty) {
-        // Show markers without clustering, offset overlapping markers
+        // Deduplicate records by lat, lon, road name, reported date, and comments
         let usedCoords = {};
-        filteredData.forEach((closure, idx) => {
+        const uniqueClosures = [];
+        filteredData.forEach(closure => {
           if (closure.latitude && closure.longitude) {
-            let lat = parseFloat(closure.latitude);
-            let lon = parseFloat(closure.longitude);
-            // Offset if this lat/lon already used
-            const key = lat + ',' + lon;
-            if (!usedCoords[key]) usedCoords[key] = 0;
-            if (usedCoords[key] > 0) {
-              // Offset by a tiny amount for each duplicate
-              lat += 0.0002 * usedCoords[key];
-              lon += 0.0002 * usedCoords[key];
+            const key = [
+              closure.latitude,
+              closure.longitude,
+              closure.Road_Name,
+              closure.Reported_On,
+              closure.Comments
+            ].join('|');
+            if (!usedCoords[key]) {
+              usedCoords[key] = true;
+              uniqueClosures.push(closure);
             }
-            usedCoords[key]++;
-            const marker = L.marker([lat, lon]);
-            marker.bindPopup(
-              `<b>${closure.Road_Name}</b><br>` +
-              `${closure.Comments}<br>` +
-              `<b>County:</b> ${closure.County_Name}<br>` +
-              `<b>Reported:</b> ${closure.Reported_On}<br>` +
-              `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
-            );
-            marker.addTo(map);
-            window.nonClusterMarkers.push(marker);
           }
+        });
+        // Show markers without clustering, offset overlapping markers
+        let offsetCoords = {};
+        uniqueClosures.forEach((closure, idx) => {
+          let lat = parseFloat(closure.latitude);
+          let lon = parseFloat(closure.longitude);
+          const key = lat + ',' + lon;
+          if (!offsetCoords[key]) offsetCoords[key] = 0;
+          if (offsetCoords[key] > 0) {
+            lat += 0.0002 * offsetCoords[key];
+            lon += 0.0002 * offsetCoords[key];
+          }
+          offsetCoords[key]++;
+          const marker = L.marker([lat, lon]);
+          marker.bindPopup(
+            `<b>${closure.Road_Name}</b><br>` +
+            `${closure.Comments}<br>` +
+            `<b>County:</b> ${closure.County_Name}<br>` +
+            `<b>Reported:</b> ${closure.Reported_On}<br>` +
+            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
+          );
+          marker.addTo(map);
+          window.nonClusterMarkers.push(marker);
         });
         // Remove cluster group from map if present
         if (map.hasLayer(markers)) map.removeLayer(markers);

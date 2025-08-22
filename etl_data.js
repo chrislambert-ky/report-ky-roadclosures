@@ -145,10 +145,20 @@ async function main()
   const csvText = await fetchCSV(csvUrl);
   console.log('CSV fetched. Length:', csvText.length);
   
-  const filteredRows = filterRows(csvText);
+
+  let filteredRows = filterRows(csvText);
   console.log('Rows parsed:', filteredRows.length);
+  // Deduplicate rows by latitude, longitude, Comments, Reported_On
+  const seen = new Set();
+  filteredRows = filteredRows.filter(row => {
+    const key = [row.latitude, row.longitude, row.Comments, row.Reported_On].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  console.log('Rows after deduplication:', filteredRows.length);
   if (filteredRows.length > 0) {
-    console.log('First row:', filteredRows[0]);
+    console.log('First deduped row:', filteredRows[0]);
   }
 
   // 2. Set up batch processing
