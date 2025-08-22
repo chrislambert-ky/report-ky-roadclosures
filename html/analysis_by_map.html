@@ -82,8 +82,35 @@
 
   function populateDropdown(id, options, label) {
     const select = document.getElementById(id);
-    select.innerHTML = `<option value="">All ${label}</option>` +
-      options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    // For county dropdown, show counts if id === 'countyFilter'
+    if (id === 'countyFilter') {
+      // Get selected year
+      const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
+      // Get selected district
+      const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
+      // Filter data by year only (not district)
+      let dataForCount = allData;
+      if (selectedYear) {
+        dataForCount = allData.filter(item => getYear(item.Reported_On) === selectedYear);
+      }
+      // If district is selected, only show counties in that district
+      let countyOptions = options;
+      if (selectedDistrict) {
+        countyOptions = getUnique(
+          allData.filter(item => String(item.District_Number) === selectedDistrict),
+          item => item.County_Name
+        );
+      }
+      select.innerHTML = `<option value="">All ${label}</option>` +
+        countyOptions.map(opt => {
+          // Count records for this county (filtered by year only)
+          const count = dataForCount.filter(item => item.County_Name === opt).length;
+          return `<option value="${opt}">${opt} (${count})</option>`;
+        }).join('');
+    } else {
+      select.innerHTML = `<option value="">All ${label}</option>` +
+        options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    }
   }
 
   function populateMenu(id, options, selected, label) {
