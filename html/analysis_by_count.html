@@ -31,74 +31,126 @@
         <h2>This page will provide analysis of road closures by count.</h2>
         <h2>Data refreshes daily 12:30am EST</h2>
     </div>
-<!-- copied and pasted from the apache echart site -->
-<!-- Now I need to customize with my data -->
-<div id="main" style="width:600px;height:400px;margin:2rem auto;">
+
+<div style="text-align:center;margin-bottom:1.5rem;">
+  <button id="resetFilterBtn" style="background:#E0E1E1;color:#003764;font-weight:bold;border:none;padding:0.6em 1.5em;border-radius:6px;cursor:pointer;font-size:1.1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Reset Filter</button>
+</div>
+<div class="diagram-grid">
+  <div class="chart-container">
+    <div id="main" style="width:100%;height:100%;"></div>
+  </div>
+  <div class="chart-container">
+    <div id="monthChart" style="width:100%;height:100%;"></div>
+  </div>
+</div>
 <script>
 var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
+var monthDom = document.getElementById('monthChart');
+var monthChart = echarts.init(monthDom);
+var resetBtn = document.getElementById('resetFilterBtn');
 
-// Fetch data and create chart
+let rawData = [];
+let selectedYear = null;
+let selectedMonth = null;
+
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function renderCharts() {
+  let filteredData = rawData;
+  if (selectedYear !== null) {
+    filteredData = filteredData.filter(closure => new Date(closure.Reported_On).getFullYear() === selectedYear);
+  }
+  if (selectedMonth !== null) {
+    filteredData = filteredData.filter(closure => new Date(closure.Reported_On).getMonth() === selectedMonth);
+  }
+
+  // Year chart
+  const yearCounts = {};
+  filteredData.forEach(closure => {
+    const year = new Date(closure.Reported_On).getFullYear();
+    yearCounts[year] = (yearCounts[year] || 0) + 1;
+  });
+  const years = Object.keys(yearCounts).sort();
+  const counts = years.map(year => yearCounts[year]);
+  const yearOption = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', data: years, axisTick: { alignWithLabel: true } },
+    yAxis: { type: 'value' },
+    series: [{ name: 'Road Closures', type: 'bar', barWidth: '60%', data: counts,
+      itemStyle: {
+        color: function(params) {
+          if (selectedYear !== null && years[params.dataIndex] == selectedYear) return '#5EB3E4';
+          return '#003764';
+        }
+      }
+    }]
+  };
+  myChart.setOption(yearOption);
+
+  // Month chart
+  const monthCounts = Array(12).fill(0);
+  filteredData.forEach(closure => {
+    const month = new Date(closure.Reported_On).getMonth();
+    monthCounts[month]++;
+  });
+  const monthOption = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', data: monthNames, axisTick: { alignWithLabel: true } },
+    yAxis: { type: 'value' },
+    series: [{ name: 'Closures by Month', type: 'bar', barWidth: '60%', data: monthCounts,
+      itemStyle: {
+        color: function(params) {
+          if (selectedMonth !== null && params.dataIndex === selectedMonth) return '#5EB3E4';
+          return '#003764';
+        }
+      }
+    }]
+  };
+  monthChart.setOption(monthOption);
+}
+
 fetch('../data/data_v4_final_roadclosures.json')
   .then(response => response.json())
   .then(data => {
-    // Count closures by year
-    const yearCounts = {};
-    data.forEach(closure => 
-    {
-      // Extract the year from the reported date
-      const year = new Date(closure.Reported_On).getFullYear();
-      // Add 1 to this year's count (create year if it doesn't exist)
-      yearCounts[year] = (yearCounts[year] || 0) + 1;
-    });
-    
-    // Convert to arrays for chart - ECharts needs arrays not objects
-    const years = Object.keys(yearCounts).sort();
-    const counts = years.map(year => yearCounts[year]);
-    
-    // Set up the chart configuration
-    const option = {
-      tooltip: 
-      {
-        trigger: 'axis',
-        axisPointer: 
-        {
-          type: 'shadow'
-        }
-      },
-      grid: 
-      {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
-      },
-      xAxis: 
-      {
-        type: 'category',
-        data: years,
-        axisTick: {
-          alignWithLabel: true
-        }
-      },
-      yAxis: 
-      {
-        type: 'value'
-      },
-      series: 
-      [{
-        name: 'Road Closures',
-        type: 'bar',
-        barWidth: '60%',
-        data: counts
-      }]
-    };
-    
-    // Apply the configuration to create the chart
-    myChart.setOption(option);
+    rawData = data;
+    renderCharts();
   });
+
+myChart.on('click', function(params) {
+  if (params.componentType === 'series') {
+    const year = parseInt(params.name);
+    if (selectedYear === year) {
+      selectedYear = null;
+    } else {
+      selectedYear = year;
+    }
+    selectedMonth = null;
+    renderCharts();
+  }
+});
+
+monthChart.on('click', function(params) {
+  if (params.componentType === 'series') {
+    const monthIdx = params.dataIndex;
+    if (selectedMonth === monthIdx) {
+      selectedMonth = null;
+    } else {
+      selectedMonth = monthIdx;
+    }
+    selectedYear = null;
+    renderCharts();
+  }
+});
+
+resetBtn.addEventListener('click', function() {
+  selectedYear = null;
+  selectedMonth = null;
+  renderCharts();
+});
 </script>
-</div>
 
 </body>
 </html>
