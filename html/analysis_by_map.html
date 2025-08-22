@@ -43,30 +43,32 @@
 
 <div style="text-align: center;">
   <div class="dropdown-filter-menus" style="display: inline-block;">
-
-  <label for="yearFilter">Year:</label>
-  <select id="yearFilter">
-    <option value="">All Years</option>
-    <!-- Options will be populated dynamically -->
-  </select>
-  <label for="districtFilter">District:</label>
-  <select id="districtFilter">
-    <option value="">All Districts</option>
-    <!-- Options will be populated dynamically -->
-  </select>
-  <label for="countyFilter">County:</label>
-  <select id="countyFilter">
-    <option value="">All Counties</option>
-    <!-- Options will be populated dynamically -->
-  </select>
-
-  <button id="clearFiltersBtn" style="margin-left: 16px;">Clear Filters</button>
-
-  <script>
+    <div style="margin-bottom:1rem;">
+      <span style="font-weight:bold;">Year:</span>
+      <div id="yearMenu" class="main-nav" style="display:inline-flex;flex-wrap:wrap;gap:0.5rem;vertical-align:middle;"></div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <span style="font-weight:bold;">District:</span>
+      <div id="districtMenu" class="main-nav" style="display:inline-flex;flex-wrap:wrap;gap:0.5rem;vertical-align:middle;"></div>
+    </div>
+    <div style="margin-bottom:1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+      <div style="flex:1; text-align:left;">
+        <label for="countyFilter" style="font-weight:bold;">County:</label>
+        <select id="countyFilter" style="font-size:1.1em;padding:0.3em 1em;border-radius:4px;border:1px solid #ccc;">
+          <option value="">All Counties</option>
+          <!-- Options will be populated dynamically -->
+        </select>
+      </div>
+      <div style="text-align:right;">
+        <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.5em;border-radius:6px;cursor:pointer;font-size:1.1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear Filters</button>
+      </div>
+    </div>
+    <script>
   // --- Dynamic Dropdowns and Map Filtering ---
   // These variables will be used by the main script as well
   let allData = [];
   let filteredData = [];
+
 
   function getUnique(arr, keyFn) {
     return [...new Set(arr.map(keyFn))].sort();
@@ -84,9 +86,62 @@
       options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
   }
 
+  function populateMenu(id, options, selected, label) {
+    const menu = document.getElementById(id);
+    menu.innerHTML = '';
+    // Add "All" option
+    const allBtn = document.createElement('a');
+    allBtn.className = 'nav-link';
+    allBtn.textContent = `All ${label}`;
+    allBtn.style.cursor = 'pointer';
+    if (!selected) {
+      allBtn.style.background = 'var(--blue)';
+      allBtn.style.color = '#fff';
+    }
+    allBtn.onclick = function() {
+      menu.querySelectorAll('.nav-link').forEach(el => {
+        el.style.background = '';
+        el.style.color = '';
+      });
+      allBtn.style.background = 'var(--blue)';
+      allBtn.style.color = '#fff';
+      setFilter(id, '');
+    };
+    menu.appendChild(allBtn);
+    options.forEach(opt => {
+      const btn = document.createElement('a');
+      btn.className = 'nav-link';
+      btn.textContent = opt;
+      btn.style.cursor = 'pointer';
+      if (selected == opt) {
+        btn.style.background = 'var(--blue)';
+        btn.style.color = '#fff';
+      }
+      btn.onclick = function() {
+        menu.querySelectorAll('.nav-link').forEach(el => {
+          el.style.background = '';
+          el.style.color = '';
+        });
+        btn.style.background = 'var(--blue)';
+        btn.style.color = '#fff';
+        setFilter(id, opt);
+      };
+      menu.appendChild(btn);
+    });
+  }
+
+  function setFilter(menuId, value) {
+    if (menuId === 'yearMenu') {
+      document.getElementById('yearFilterValue').value = value;
+    } else if (menuId === 'districtMenu') {
+      document.getElementById('districtFilterValue').value = value;
+    }
+    onFilterChange();
+  }
+
   function filterData() {
-    const year = document.getElementById('yearFilter').value;
-    const district = document.getElementById('districtFilter').value;
+    const year = document.getElementById('yearFilterValue').value;
+    const district = document.getElementById('districtFilterValue').value;
     const county = document.getElementById('countyFilter').value;
     filteredData = allData.filter(item => {
       const itemYear = getYear(item.Reported_On);
@@ -97,13 +152,23 @@
   }
 
   function updateDropdowns() {
-    // After filtering, get valid options for each dropdown
-    const yearSet = getUnique(filteredData, item => getYear(item.Reported_On));
-    let districtSet = getUnique(filteredData, item => String(item.District_Number));
+    // Always show all years and districts from allData
+    const yearSet = getUnique(allData, item => getYear(item.Reported_On));
+    let districtSet = getUnique(allData, item => String(item.District_Number));
     districtSet = districtSet.sort((a, b) => Number(a) - Number(b));
-    const countySet = getUnique(filteredData, item => item.County_Name);
-    populateDropdown('yearFilter', yearSet, 'Years');
-    populateDropdown('districtFilter', districtSet, 'Districts');
+    // County options filtered by selected district
+    const selectedDistrict = document.getElementById('districtFilterValue').value;
+    let countySet;
+    if (selectedDistrict) {
+      countySet = getUnique(
+        allData.filter(item => String(item.District_Number) === selectedDistrict),
+        item => item.County_Name
+      );
+    } else {
+      countySet = getUnique(allData, item => item.County_Name);
+    }
+    populateMenu('yearMenu', yearSet, document.getElementById('yearFilterValue').value, 'Years');
+    populateMenu('districtMenu', districtSet, document.getElementById('districtFilterValue').value, 'Districts');
     populateDropdown('countyFilter', countySet, 'Counties');
   }
 
@@ -129,22 +194,37 @@
   function onFilterChange(e) {
     // Save current selections
     const prev = {
-      year: document.getElementById('yearFilter').value,
-      district: document.getElementById('districtFilter').value,
+      year: document.getElementById('yearFilterValue').value,
+      district: document.getElementById('districtFilterValue').value,
       county: document.getElementById('countyFilter').value
     };
     filterData();
     updateDropdowns();
     // Restore previous selection if still valid
-    if (prev.year) document.getElementById('yearFilter').value = prev.year;
-    if (prev.district) document.getElementById('districtFilter').value = prev.district;
-    if (prev.county) document.getElementById('countyFilter').value = prev.county;
+    document.getElementById('yearFilterValue').value = prev.year;
+    document.getElementById('districtFilterValue').value = prev.district;
+    document.getElementById('countyFilter').value = prev.county;
     filterData(); // filter again in case dropdowns changed
     updateMapMarkers();
   }
 
   // Wait for DOM and map to be ready
   document.addEventListener('DOMContentLoaded', function() {
+    // Add hidden inputs to store selected values
+    if (!document.getElementById('yearFilterValue')) {
+      const y = document.createElement('input');
+      y.type = 'hidden';
+      y.id = 'yearFilterValue';
+      y.value = '';
+      document.body.appendChild(y);
+    }
+    if (!document.getElementById('districtFilterValue')) {
+      const d = document.createElement('input');
+      d.type = 'hidden';
+      d.id = 'districtFilterValue';
+      d.value = '';
+      document.body.appendChild(d);
+    }
     fetch('../data/data_v4_final_roadclosures.json')
       .then(response => response.json())
       .then(data => {
@@ -152,14 +232,12 @@
         filteredData = data;
         updateDropdowns();
         updateMapMarkers();
-        // Add event listeners
-        ['yearFilter', 'districtFilter', 'countyFilter'].forEach(id => {
-          document.getElementById(id).addEventListener('change', onFilterChange);
-        });
+        // County dropdown event
+        document.getElementById('countyFilter').addEventListener('change', onFilterChange);
         // Clear Filters button
         document.getElementById('clearFiltersBtn').addEventListener('click', function() {
-          document.getElementById('yearFilter').value = '';
-          document.getElementById('districtFilter').value = '';
+          document.getElementById('yearFilterValue').value = '';
+          document.getElementById('districtFilterValue').value = '';
           document.getElementById('countyFilter').value = '';
           filterData();
           updateDropdowns();
