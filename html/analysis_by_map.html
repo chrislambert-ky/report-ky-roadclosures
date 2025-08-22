@@ -202,19 +202,59 @@
   function updateMapMarkers() {
     if (typeof markers !== 'undefined') {
       markers.clearLayers();
-      filteredData.forEach(closure => {
-        if (closure.latitude && closure.longitude) {
-          const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
-          marker.bindPopup(
-            `<b>${closure.Road_Name}</b><br>` +
-            `${closure.Comments}<br>` +
-            `<b>County:</b> ${closure.County_Name}<br>` +
-            `<b>Reported:</b> ${closure.Reported_On}<br>` +
-            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
-          );
-          markers.addLayer(marker);
-        }
-      });
+      // Remove previous non-clustered markers if any
+      if (window.nonClusterMarkers) {
+        window.nonClusterMarkers.forEach(m => map.removeLayer(m));
+      }
+      window.nonClusterMarkers = [];
+      const selectedCounty = document.getElementById('countyFilter').value;
+      if (selectedCounty) {
+        // Show markers without clustering, offset overlapping markers
+        let usedCoords = {};
+        filteredData.forEach((closure, idx) => {
+          if (closure.latitude && closure.longitude) {
+            let lat = parseFloat(closure.latitude);
+            let lon = parseFloat(closure.longitude);
+            // Offset if this lat/lon already used
+            const key = lat + ',' + lon;
+            if (!usedCoords[key]) usedCoords[key] = 0;
+            if (usedCoords[key] > 0) {
+              // Offset by a tiny amount for each duplicate
+              lat += 0.0002 * usedCoords[key];
+              lon += 0.0002 * usedCoords[key];
+            }
+            usedCoords[key]++;
+            const marker = L.marker([lat, lon]);
+            marker.bindPopup(
+              `<b>${closure.Road_Name}</b><br>` +
+              `${closure.Comments}<br>` +
+              `<b>County:</b> ${closure.County_Name}<br>` +
+              `<b>Reported:</b> ${closure.Reported_On}<br>` +
+              `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
+            );
+            marker.addTo(map);
+            window.nonClusterMarkers.push(marker);
+          }
+        });
+        // Remove cluster group from map if present
+        if (map.hasLayer(markers)) map.removeLayer(markers);
+      } else {
+        // Show clustered markers
+        filteredData.forEach(closure => {
+          if (closure.latitude && closure.longitude) {
+            const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
+            marker.bindPopup(
+              `<b>${closure.Road_Name}</b><br>` +
+              `${closure.Comments}<br>` +
+              `<b>County:</b> ${closure.County_Name}<br>` +
+              `<b>Reported:</b> ${closure.Reported_On}<br>` +
+              `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
+            );
+            markers.addLayer(marker);
+          }
+        });
+        if (!map.hasLayer(markers)) map.addLayer(markers);
+      }
     }
   }
 
