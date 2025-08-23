@@ -82,7 +82,7 @@ function renderCharts() {
       itemStyle: {
         color: function(params) {
           if (selectedYear !== null && years[params.dataIndex] == selectedYear) return '#5EB3E4';
-          return '#003764';
+          return '#5470C6'; // ECharts default blue
         }
       }
     }]
@@ -104,7 +104,7 @@ function renderCharts() {
       itemStyle: {
         color: function(params) {
           if (selectedMonth !== null && params.dataIndex === selectedMonth) return '#5EB3E4';
-          return '#003764';
+          return '#5470C6'; // ECharts default blue
         }
       }
     }]
