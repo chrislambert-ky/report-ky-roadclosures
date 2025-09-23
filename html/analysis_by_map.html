@@ -60,6 +60,11 @@
         </select>
       </div>
       <div style="text-align:right;">
+        <label style="margin-right:0.75rem; font-size:0.95em;">
+          <input id="noClusterToggle" type="checkbox" style="margin-right:0.35rem;"> Disable clustering
+        </label>
+  <button id="refreshDataBtn" style="margin-right:0.6rem;background:#e9f5ff;color:var(--blue);font-weight:600;border:1px solid var(--blue);padding:0.45em 1em;border-radius:6px;cursor:pointer;font-size:0.95em;">Refresh Data</button>
+  <span id="dataStatus" style="margin-left:0.8rem;font-size:0.9em;color:#333"></span>
         <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.5em;border-radius:6px;cursor:pointer;font-size:1.1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear Filters</button>
       </div>
     </div>
@@ -68,6 +73,274 @@
   // These variables will be used by the main script as well
   let allData = [];
   let filteredData = [];
+
+  // --- IndexedDB helpers ---
+  const IDB_DB_NAME = 'roadclosures-db';
+  const IDB_STORE = 'datasets';
+  const IDB_KEY = 'data_v4_final_roadclosures';
+
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_DB_NAME, 1);
+      req.onupgradeneeded = function(e) {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      req.onsuccess = function(e) { resolve(e.target.result); };
+      req.onerror = function(e) { reject(e.target.error); };
+    });
+  }
+
+  async function idbGet(key) {
+    try {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async function idbPut(key, value) {
+    try {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function idbDelete(key) {
+    try {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function loadDataAndInit() {
+    const status = { source: 'none', idbTime: 0, fetchTime: 0, records: 0 };
+    try {
+      const t0 = performance.now();
+      const cached = await idbGet(IDB_KEY);
+      status.idbTime = Math.round(performance.now() - t0);
+      if (cached && Array.isArray(cached)) {
+        status.source = 'indexeddb';
+        status.records = cached.length;
+        updateDataStatus(status);
+        console.info('Loaded data from IndexedDB:', cached.length, 'records', 'idbms=', status.idbTime);
+        allData = cached;
+        filteredData = allData;
+  updateDropdowns();
+  scheduleUpdateMapMarkers();
+  attachFilterHandlers();
+        return;
+      }
+    } catch (err) {
+      console.warn('IDB read error', err);
+    }
+
+    // Fallback to fetching and caching
+    try {
+      const t1 = performance.now();
+      const resp = await fetch('../data/data_v4_final_roadclosures.json');
+      const data = await resp.json();
+      status.fetchTime = Math.round(performance.now() - t1);
+      status.source = 'network';
+      status.records = Array.isArray(data) ? data.length : 0;
+      updateDataStatus(status);
+      console.info('Fetched data from network:', status.records, 'records', 'fetchms=', status.fetchTime);
+      allData = data;
+      filteredData = allData;
+  updateDropdowns();
+  scheduleUpdateMapMarkers();
+  attachFilterHandlers();
+      // Cache in background
+      idbPut(IDB_KEY, data).then(() => console.info('Cached dataset to IndexedDB')).catch(e => console.warn('Failed to cache', e));
+    } catch (err) {
+      console.error('Network fetch failed', err);
+      updateDataStatus({ source: 'error', message: String(err) });
+    }
+  }
+
+  function updateDataStatus(info) {
+    const el = document.getElementById('dataStatus');
+    if (!el) return;
+    if (info.source === 'indexeddb') {
+      el.textContent = `Loaded from cache: ${info.records} records (idb ${info.idbTime} ms)`;
+    } else if (info.source === 'network') {
+      el.textContent = `Fetched ${info.records} records (network ${info.fetchTime} ms)`;
+    } else if (info.source === 'error') {
+      el.textContent = `Error: ${info.message}`;
+    } else {
+      el.textContent = '';
+    }
+  }
+
+  function attachFilterHandlers() {
+    const countyEl = document.getElementById('countyFilter');
+    if (countyEl && !countyEl._attached) {
+  countyEl.addEventListener('change', function(){ onFilterChange(); scheduleUpdateMapMarkers(); });
+      countyEl._attached = true;
+    }
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (clearBtn && !clearBtn._attached) {
+      clearBtn.addEventListener('click', function() {
+        document.getElementById('yearFilterValue').value = '';
+        document.getElementById('districtFilterValue').value = '';
+        document.getElementById('countyFilter').value = '';
+        filterData();
+        updateDropdowns();
+        scheduleUpdateMapMarkers();
+      });
+      clearBtn._attached = true;
+    }
+    const toggle = document.getElementById('noClusterToggle');
+    if (toggle && !toggle._attached) {
+      toggle.addEventListener('change', function() {
+        // Re-render markers using the new clustering preference (debounced)
+        scheduleUpdateMapMarkers(150);
+      });
+      toggle._attached = true;
+    }
+    const refreshBtn = document.getElementById('refreshDataBtn');
+    if (refreshBtn && !refreshBtn._attached) {
+      refreshBtn.addEventListener('click', async function() {
+        // Simple UI feedback
+        refreshBtn.disabled = true;
+        const orig = refreshBtn.textContent;
+        refreshBtn.textContent = 'Refreshing...';
+        try {
+          await idbDelete(IDB_KEY);
+          console.info('Deleted cached dataset from IndexedDB');
+          // Clear current data and UI
+          allData = [];
+          filteredData = [];
+          updateDropdowns();
+          scheduleUpdateMapMarkers();
+          // Force network fetch and re-cache
+          await loadDataAndInit();
+        } catch (err) {
+          console.warn('Refresh failed', err);
+        }
+        refreshBtn.textContent = orig;
+        refreshBtn.disabled = false;
+      });
+      refreshBtn._attached = true;
+    }
+  }
+
+  // Add chunked marker addition to avoid blocking the main thread when adding many markers
+  function chunkedAddMarkers(closures, chunkSize = 400, delay = 20) {
+    // closures: array of closure objects already deduplicated
+    window.nonClusterMarkers = window.nonClusterMarkers || [];
+    let i = 0;
+    function work() {
+      const end = Math.min(i + chunkSize, closures.length);
+      document.getElementById('perfRendering').textContent = `${i}/${closures.length}`;
+      for (; i < end; i++) {
+        const closure = closures[i];
+        const lat = parseFloat(closure.latitude);
+        const lon = parseFloat(closure.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          const marker = L.marker([lat, lon]);
+          // Defer popup creation until first click to reduce upfront cost
+          const content = `<b>${closure.Road_Name}</b><br>` +
+            `${closure.Comments}<br>` +
+            `<b>County:</b> ${closure.County_Name}<br>` +
+            `<b>Reported:</b> ${closure.Reported_On}<br>` +
+            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`;
+          marker.on('click', function(e) {
+            if (!this.getPopup()) {
+              this.bindPopup(content).openPopup();
+            }
+          });
+          marker.addTo(map);
+          window.nonClusterMarkers.push(marker);
+        }
+      }
+      if (i < closures.length) {
+        setTimeout(work, delay);
+      }
+    }
+    work();
+  }
+
+  // Perf instrumentation
+  let perf = { wheel: 0, zooms: 0, lastZoomStart: 0 };
+  function updatePerfMarkers() {
+    const count = (window.nonClusterMarkers && window.nonClusterMarkers.length) || 0;
+    document.getElementById('perfMarkers').textContent = count;
+  }
+
+  // Debounced update helper to avoid re-rendering rapidly during wheel/zoom
+  let __updateTimer = null;
+  function scheduleUpdateMapMarkers(delay = 200) {
+    if (__updateTimer) clearTimeout(__updateTimer);
+    __updateTimer = setTimeout(() => {
+      updateMapMarkers();
+      updatePerfMarkers();
+      __updateTimer = null;
+    }, delay);
+  }
+
+  function clearPerf() {
+    perf.wheel = 0; perf.zooms = 0; perf.lastZoomStart = 0;
+    document.getElementById('perfWheel').textContent = '0';
+    document.getElementById('perfZooms').textContent = '0';
+    document.getElementById('perfZoomTime').textContent = '0';
+    document.getElementById('perfRendering').textContent = 'idle';
+    document.getElementById('perfStatus').textContent = 'Ready';
+  }
+
+  // Attach map event listeners after map exists
+  function attachPerfListeners() {
+    if (!map) return;
+    map.getContainer().addEventListener('wheel', function() {
+      perf.wheel++;
+      document.getElementById('perfWheel').textContent = perf.wheel;
+    }, { passive: true });
+
+    map.on('zoomstart', function() {
+      perf.lastZoomStart = performance.now();
+      document.getElementById('perfStatus').textContent = 'Zooming...';
+    });
+    map.on('zoomend', function() {
+      perf.zooms++;
+      const elapsed = Math.round(performance.now() - perf.lastZoomStart);
+      document.getElementById('perfZooms').textContent = perf.zooms;
+      document.getElementById('perfZoomTime').textContent = elapsed;
+      document.getElementById('perfStatus').textContent = 'Ready';
+      console.info('zoomend elapsed', elapsed, 'ms; scheduling render');
+      // Schedule render (if any) after zoom ends
+      const zap = performance.now();
+      scheduleUpdateMapMarkers(150);
+      // scheduleUpdateMapMarkers will call updateMapMarkers after the delay; log then
+      setTimeout(() => console.info('render scheduled delta', Math.round(performance.now() - zap), 'ms'), 170);
+    });
+
+    document.getElementById('perfClear').addEventListener('click', clearPerf);
+  }
 
 
   function getUnique(arr, keyFn) {
@@ -208,6 +481,7 @@
       }
       window.nonClusterMarkers = [];
       const selectedCounty = document.getElementById('countyFilter').value;
+      const noCluster = document.getElementById('noClusterToggle') && document.getElementById('noClusterToggle').checked;
       if (selectedCounty) {
         // Deduplicate records by lat, lon, road name, reported date, and comments
         let usedCoords = {};
@@ -229,34 +503,21 @@
         });
         // Show markers without clustering, offset overlapping markers
         let offsetCoords = {};
-        uniqueClosures.forEach((closure, idx) => {
-          let lat = parseFloat(closure.latitude);
-          let lon = parseFloat(closure.longitude);
-          const key = lat + ',' + lon;
-          if (!offsetCoords[key]) offsetCoords[key] = 0;
-          if (offsetCoords[key] > 0) {
-            lat += 0.0002 * offsetCoords[key];
-            lon += 0.0002 * offsetCoords[key];
-          }
-          offsetCoords[key]++;
-          const marker = L.marker([lat, lon]);
-          marker.bindPopup(
-            `<b>${closure.Road_Name}</b><br>` +
-            `${closure.Comments}<br>` +
-            `<b>County:</b> ${closure.County_Name}<br>` +
-            `<b>Reported:</b> ${closure.Reported_On}<br>` +
-            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
-          );
-          marker.addTo(map);
-          window.nonClusterMarkers.push(marker);
-        });
-        // Remove cluster group from map if present
-        if (map.hasLayer(markers)) map.removeLayer(markers);
-      } else {
-        // Show clustered markers
-        filteredData.forEach(closure => {
-          if (closure.latitude && closure.longitude) {
-            const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
+        // When showing non-clustered markers, use chunked rendering to avoid blocking
+        if (noCluster) {
+          chunkedAddMarkers(uniqueClosures);
+        } else {
+          uniqueClosures.forEach((closure, idx) => {
+            let lat = parseFloat(closure.latitude);
+            let lon = parseFloat(closure.longitude);
+            const key = lat + ',' + lon;
+            if (!offsetCoords[key]) offsetCoords[key] = 0;
+            if (offsetCoords[key] > 0) {
+              lat += 0.0002 * offsetCoords[key];
+              lon += 0.0002 * offsetCoords[key];
+            }
+            offsetCoords[key]++;
+            const marker = L.marker([lat, lon]);
             marker.bindPopup(
               `<b>${closure.Road_Name}</b><br>` +
               `${closure.Comments}<br>` +
@@ -264,10 +525,36 @@
               `<b>Reported:</b> ${closure.Reported_On}<br>` +
               `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
             );
-            markers.addLayer(marker);
-          }
-        });
-        if (!map.hasLayer(markers)) map.addLayer(markers);
+            marker.addTo(map);
+            window.nonClusterMarkers.push(marker);
+          });
+        }
+        // Remove cluster group from map if present
+        if (map.hasLayer(markers)) map.removeLayer(markers);
+      } else {
+        // No specific county selected: either show all markers clustered, or
+        // if the user disabled clustering, render markers directly in chunks.
+        if (noCluster) {
+          // Render non-clustered markers in chunks to avoid blocking
+          chunkedAddMarkers(filteredData);
+          if (map.hasLayer(markers)) map.removeLayer(markers);
+        } else {
+          // Show clustered markers (batch-add to cluster for performance)
+          filteredData.forEach(closure => {
+            if (closure.latitude && closure.longitude) {
+              const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
+              marker.bindPopup(
+                `<b>${closure.Road_Name}</b><br>` +
+                `${closure.Comments}<br>` +
+                `<b>County:</b> ${closure.County_Name}<br>` +
+                `<b>Reported:</b> ${closure.Reported_On}<br>` +
+                `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
+              );
+              markers.addLayer(marker);
+            }
+          });
+          if (!map.hasLayer(markers)) map.addLayer(markers);
+        }
       }
     }
   }
@@ -306,25 +593,8 @@
       d.value = '';
       document.body.appendChild(d);
     }
-    fetch('../data/data_v4_final_roadclosures.json')
-      .then(response => response.json())
-      .then(data => {
-        allData = data;
-        filteredData = data;
-        updateDropdowns();
-        updateMapMarkers();
-        // County dropdown event
-        document.getElementById('countyFilter').addEventListener('change', onFilterChange);
-        // Clear Filters button
-        document.getElementById('clearFiltersBtn').addEventListener('click', function() {
-          document.getElementById('yearFilterValue').value = '';
-          document.getElementById('districtFilterValue').value = '';
-          document.getElementById('countyFilter').value = '';
-          filterData();
-          updateDropdowns();
-          updateMapMarkers();
-        });
-      });
+    // Load data (try IndexedDB first, then network) and initialize the UI
+    loadDataAndInit();
   });
   </script>
   </div>
@@ -333,6 +603,18 @@
     <div style="text-align: center;">
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
+
+<!-- Performance diagnostic panel -->
+<div id="perfPanel" style="position:fixed;right:12px;top:80px;background:rgba(255,255,255,0.95);padding:10px;border:1px solid #ddd;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:12px;z-index:9999;width:220px;">
+  <strong>Perf</strong>
+  <div id="perfStatus" style="margin-top:6px;color:#333">Ready</div>
+  <div style="margin-top:6px;font-weight:600;color:#333">Markers: <span id="perfMarkers">0</span></div>
+  <div style="margin-top:4px">Wheel events: <span id="perfWheel">0</span></div>
+  <div style="margin-top:4px">Zooms: <span id="perfZooms">0</span></div>
+  <div style="margin-top:6px">Last zoom time: <span id="perfZoomTime">0</span> ms</div>
+  <div style="margin-top:6px">Rendering: <span id="perfRendering">idle</span></div>
+  <div style="margin-top:8px;text-align:right"><button id="perfClear" style="font-size:11px;padding:4px 8px">Clear</button></div>
+</div>
 
 <script>
 
@@ -360,26 +642,13 @@ const markers = L.markerClusterGroup({
     disableClusteringAtZoom: 12
 });
 
-// Fetch the road closure data and add markers to the map
-fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => response.json())
-  .then(data => {
-    // Loop through each closure and create a marker
-    data.forEach(closure => {
-      const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
-      // Set up the popup that shows when you click a marker
-      marker.bindPopup(
-        `<b>${closure.Road_Name}</b><br>
-         ${closure.Comments}<br>
-         <b>County:</b> ${closure.County_Name}<br>
-         <b>Reported:</b> ${closure.Reported_On}<br>
-         <b>Duration (hrs):</b> ${closure.Duration_Hours}`
-      );
-      markers.addLayer(marker);
-    });
-    // Add all the markers to the map at once
-    map.addLayer(markers);
-  });
+// Add marker cluster group and let updateMapMarkers manage adding/removing markers
+map.addLayer(markers);
+// Ensure data is loaded (from IDB if present) and UI is initialized
+loadDataAndInit();
+// Attach perf listeners and update counts
+attachPerfListeners();
+updatePerfMarkers();
 
 </script>
 
