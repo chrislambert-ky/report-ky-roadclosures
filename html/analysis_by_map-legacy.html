@@ -40,6 +40,10 @@
         <h2>Data refreshes daily 12:30am EST</h2>
     </div>
     <div style="text-align: center;">
+      <div style="margin-bottom:6px;">
+        <span id="dataStatusLegacy" style="font-size:0.95em;color:#333;margin-right:12px"></span>
+        <span id="legendContainer" style="display:inline-block;vertical-align:middle"></span>
+      </div>
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
 <script>
@@ -67,27 +71,141 @@ const markers = L.markerClusterGroup({
     maxClusterRadius: 60,
     disableClusteringAtZoom: 12
 });
+// We'll use IndexedDB to cache the JSON and render all points without clustering
+// IndexedDB helpers
+const IDB_DB_NAME = 'roadclosures-db';
+const IDB_STORE = 'datasets';
+const IDB_KEY = 'data_v4_final_roadclosures';
 
-// Fetch the road closure data and add markers to the map
-fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => response.json())
-  .then(data => {
-    // Loop through each closure and create a marker
-    data.forEach(closure => {
-      const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
-      // Set up the popup that shows when you click a marker
-      marker.bindPopup(
-        `<b>${closure.Road_Name}</b><br>
-         ${closure.Comments}<br>
-         <b>County:</b> ${closure.County_Name}<br>
-         <b>Reported:</b> ${closure.Reported_On}<br>
-         <b>Duration (hrs):</b> ${closure.Duration_Hours}`
-      );
-      markers.addLayer(marker);
-    });
-    // Add all the markers to the map at once
-    map.addLayer(markers);
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_DB_NAME, 1);
+    req.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
   });
+}
+
+async function idbGet(key) {
+  try {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+async function idbPut(key, value) {
+  try {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.put(value, key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    return false;
+  }
+}
+
+// Chunked renderer (no clustering) with deferred popup binding
+function chunkedAddMarkersNoCluster(data, chunkSize = 500, delay = 25) {
+  let i = 0;
+  window.nonClusterMarkers = [];
+  function work() {
+    const end = Math.min(i + chunkSize, data.length);
+    for (; i < end; i++) {
+      const closure = data[i];
+      const lat = parseFloat(closure.latitude);
+      const lon = parseFloat(closure.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      // color by year
+      const year = (closure.Reported_On && (new Date(closure.Reported_On)).getFullYear()) || 'unknown';
+      const color = yearColor(year);
+      const marker = L.circleMarker([lat, lon], { radius: 5, color: color, weight: 1, fillOpacity: 0.9 });
+      const content = `<b>${closure.Road_Name}</b><br>` +
+        `${closure.Comments}<br>` +
+        `<b>County:</b> ${closure.County_Name}<br>` +
+        `<b>Reported:</b> ${closure.Reported_On}<br>` +
+        `<b>Duration (hrs):</b> ${closure.Duration_Hours}`;
+      marker.on('click', function() {
+        if (!this.getPopup()) this.bindPopup(content).openPopup();
+      });
+      marker.addTo(map);
+      window.nonClusterMarkers.push(marker);
+    }
+    if (i < data.length) setTimeout(work, delay);
+  }
+  work();
+}
+
+// Year color mapping and legend
+const _yearColorCache = {};
+function yearColor(year) {
+  if (_yearColorCache[year]) return _yearColorCache[year];
+  // generate deterministic color from year
+  const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+  const idx = Math.abs(String(year).split('').reduce((s,c)=>s*31 + c.charCodeAt(0), 7)) % palette.length;
+  _yearColorCache[year] = palette[idx];
+  return _yearColorCache[year];
+}
+
+function buildLegend(years) {
+  const container = document.getElementById('legendContainer');
+  if (!container) return;
+  const unique = Array.from(new Set(years)).sort();
+  container.innerHTML = '';
+  unique.slice(0,8).forEach(y => {
+    const span = document.createElement('span');
+    span.style.display = 'inline-block';
+    span.style.marginRight = '8px';
+    span.innerHTML = `<svg width="12" height="12"><rect width="12" height="12" fill="${yearColor(y)}"></rect></svg>&nbsp;${y}`;
+    container.appendChild(span);
+  });
+}
+
+// Load data from IDB or network and render all points without clustering
+async function loadDataAndRenderAll() {
+  try {
+    const cache = await idbGet(IDB_KEY);
+    if (cache && Array.isArray(cache)) {
+      console.info('Loaded from IDB', cache.length);
+      document.getElementById('dataStatusLegacy').textContent = `Loaded from cache: ${cache.length} records`;
+      // build legend from cache years
+      try { buildLegend(cache.map(d => (d.Reported_On && (new Date(d.Reported_On)).getFullYear()) || 'unknown')); } catch(e){}
+      chunkedAddMarkersNoCluster(cache);
+      return;
+    }
+  } catch (err) {
+    console.warn('IDB read failed', err);
+  }
+  try {
+    const resp = await fetch('../data/data_v4_final_roadclosures.json');
+    const data = await resp.json();
+    console.info('Fetched network count', data.length);
+  document.getElementById('dataStatusLegacy').textContent = `Fetched: ${data.length} records`;
+  try { buildLegend(data.map(d => (d.Reported_On && (new Date(d.Reported_On)).getFullYear()) || 'unknown')); } catch(e){}
+  chunkedAddMarkersNoCluster(data);
+  // cache
+  idbPut(IDB_KEY, data).then(() => console.info('Cached to IDB')).catch(e => console.warn('Cache failed', e));
+  } catch (err) {
+    console.error('Fetch failed', err);
+  }
+}
+
+// Start loading and rendering (no clustering)
+loadDataAndRenderAll();
 
 </script>
 
