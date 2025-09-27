@@ -451,12 +451,48 @@
     sel.innerHTML = '';
     const first = document.createElement('option');
     first.value = '';
-    first.textContent = `${allLabel}`;
+    // Show total count for the 'All' option when building year/district selects
+    let totalCountForAll = null;
+    if (id === 'yearFilterSelect' || id === 'districtFilterSelect') {
+      // compute counts respecting other active filters but excluding the dimension we are counting
+      const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
+      const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
+      const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
+      totalCountForAll = allData.filter(item => {
+        // For year select, exclude year filter when counting years (we want counts per year across current district/county)
+        const byDistrict = id === 'yearFilterSelect' ? (selectedDistrict ? String(item.District_Number) === selectedDistrict : true) : (selectedYear ? getYear(item.Reported_On) === selectedYear : true);
+        const byCounty = selectedCounty ? item.County_Name === selectedCounty : true;
+        // For district select, exclude district filter when counting districts
+        return byDistrict && byCounty;
+      }).length;
+    }
+    first.textContent = totalCountForAll !== null ? `${allLabel} (${totalCountForAll})` : `${allLabel}`;
     sel.appendChild(first);
     options.forEach(opt => {
       const o = document.createElement('option');
       o.value = opt;
-      o.textContent = opt;
+      // If we are building year or district selects, compute counts that respect other filters
+      if (id === 'yearFilterSelect') {
+        const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
+        const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
+        const count = allData.filter(item => {
+          return getYear(item.Reported_On) === opt &&
+                 (selectedDistrict ? String(item.District_Number) === selectedDistrict : true) &&
+                 (selectedCounty ? item.County_Name === selectedCounty : true);
+        }).length;
+        o.textContent = `${opt} (${count})`;
+      } else if (id === 'districtFilterSelect') {
+        const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
+        const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
+        const count = allData.filter(item => {
+          return String(item.District_Number) === opt &&
+                 (selectedYear ? getYear(item.Reported_On) === selectedYear : true) &&
+                 (selectedCounty ? item.County_Name === selectedCounty : true);
+        }).length;
+        o.textContent = `${opt} (${count})`;
+      } else {
+        o.textContent = opt;
+      }
       sel.appendChild(o);
     });
   }
@@ -586,9 +622,11 @@
     });
     // Build legend from available years
     buildLegend(getUnique(uniqueClosures, item => getYear(item.Reported_On)));
-    // Zoom/fit to selected county extent if a county is selected
+    // Zoom/fit to selected county OR district extent if selected
     try {
-      if (selectedCounty && uniqueClosures.length > 0) {
+      const selectedDistrict = document.getElementById('districtFilterValue').value;
+      // If county selected, we already filtered uniqueClosures to county
+      if ((selectedCounty || selectedDistrict) && uniqueClosures.length > 0) {
         const bounds = L.latLngBounds(uniqueClosures.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
         if (bounds.isValid() && bounds.getNorthEast() && bounds.getSouthWest()) {
           if (uniqueClosures.length === 1) {
@@ -599,9 +637,16 @@
             map.fitBounds(bounds.pad(0.15));
           }
         }
-      } else if (!selectedCounty) {
-        // no county selected: reset to default full-state view
+      } else if (!selectedCounty && !selectedDistrict) {
+        // no county or district selected: reset to default full-state view
         try { map.setView([37.822295, -85.76819], 7); } catch (e) { /* noop */ }
+      } else if (selectedDistrict && uniqueClosures.length === 0) {
+        // If district selected but there were no deduped closures (edge case), try to use all filteredData for district extents
+        const districtItems = filteredData.filter(item => String(item.District_Number) === selectedDistrict && item.latitude && item.longitude);
+        if (districtItems.length > 0) {
+          const bounds = L.latLngBounds(districtItems.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
+          if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+        }
       }
     } catch (e) { console.warn('Error fitting bounds', e); }
 
