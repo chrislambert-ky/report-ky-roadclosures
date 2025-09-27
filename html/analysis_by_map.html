@@ -140,9 +140,24 @@
     }
   }
 
+  // Return a date string (YYYY-MM-DD) in America/New_York timezone when possible
+  function getETDateString() {
+    try {
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+      const y = parts.find(p => p.type === 'year').value;
+      const m = parts.find(p => p.type === 'month').value;
+      const d = parts.find(p => p.type === 'day').value;
+      return `${y}-${m}-${d}`;
+    } catch (e) {
+      return new Date().toISOString().slice(0,10);
+    }
+  }
+
   async function loadDataAndInit() {
     // IDB-first model with daily check for current year updates.
-    const today = new Date().toISOString().slice(0,10);
+      // IDB-first model with daily check for current year updates using ET date
+      const today = getETDateString();
     try {
       const t0 = performance.now();
       const cached = await idbGet(IDB_KEY);
@@ -208,11 +223,11 @@
       }
       // No cached data: fetch initial dataset and populate IDB (first visit)
       const t2 = performance.now();
-      const resp2 = await fetch('../data/data_v4_final_roadclosures.json');
-      const data2 = await resp2.json();
-      const fetchMs2 = Math.round(performance.now() - t2);
-      await idbPut(IDB_KEY, data2);
-      await idbPut(IDB_META_KEY, { lastFetched: today });
+  const resp2 = await fetch('../data/data_v4_final_roadclosures.json');
+  const data2 = await resp2.json();
+  const fetchMs2 = Math.round(performance.now() - t2);
+  await idbPut(IDB_KEY, data2);
+  await idbPut(IDB_META_KEY, { lastFetched: today });
       updateDataStatus({ source: 'network-initial', fetchTime: fetchMs2, records: data2.length });
       console.info('Fetched initial dataset and cached to IDB:', data2.length);
       allData = data2;
@@ -306,8 +321,8 @@
           const data = await resp.json();
           const fetchMs = Math.round(performance.now() - t);
           await idbPut(IDB_KEY, data);
-          const today = new Date().toISOString().slice(0,10);
-          await idbPut(IDB_META_KEY, { lastFetched: today });
+          const etToday = getETDateString();
+          await idbPut(IDB_META_KEY, { lastFetched: etToday });
           console.info('Fetched and cached dataset to IDB:', data.length);
           updateDataStatus({ source: 'network', fetchTime: fetchMs, records: Array.isArray(data) ? data.length : 0 });
           allData = data;
