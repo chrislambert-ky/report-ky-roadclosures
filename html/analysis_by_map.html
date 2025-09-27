@@ -42,31 +42,32 @@
 
 
 <div style="text-align: center;">
-  <div class="dropdown-filter-menus" style="display: inline-block;">
-    <div style="margin-bottom:1rem;">
-      <span style="font-weight:bold;">Year:</span>
-      <div id="yearMenu" class="main-nav" style="display:inline-flex;flex-wrap:wrap;gap:0.5rem;vertical-align:middle;"></div>
-    </div>
-    <div style="margin-bottom:1rem;">
-      <span style="font-weight:bold;">District:</span>
-      <div id="districtMenu" class="main-nav" style="display:inline-flex;flex-wrap:wrap;gap:0.5rem;vertical-align:middle;"></div>
-    </div>
-    <div style="margin-bottom:1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
-      <div style="flex:1; text-align:left;">
-        <label for="countyFilter" style="font-weight:bold;">County:</label>
-        <select id="countyFilter" style="font-size:1.1em;padding:0.3em 1em;border-radius:4px;border:1px solid #ccc;">
+  <!-- Center filter controls to match the map width (800px) -->
+  <div class="dropdown-filter-menus" style="display: inline-block; width:100%; max-width:800px;">
+    <!-- Row 1: selectors inline with labels next to selects -->
+    <div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <label for="yearFilterSelect" style="font-weight:bold;margin:0;">Year</label>
+        <select id="yearFilterSelect" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:120px;"></select>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <label for="districtFilterSelect" style="font-weight:bold;margin:0;">District</label>
+        <select id="districtFilterSelect" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:110px;"></select>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <label for="countyFilter" style="font-weight:bold;margin:0;">County</label>
+        <select id="countyFilter" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:160px;">
           <option value="">All Counties</option>
-          <!-- Options will be populated dynamically -->
         </select>
       </div>
-      <div style="text-align:right;">
-        <label style="margin-right:0.75rem; font-size:0.95em;">
-          <input id="noClusterToggle" type="checkbox" style="margin-right:0.35rem;"> Disable clustering
-        </label>
-  <button id="refreshDataBtn" style="margin-right:0.6rem;background:#e9f5ff;color:var(--blue);font-weight:600;border:1px solid var(--blue);padding:0.45em 1em;border-radius:6px;cursor:pointer;font-size:0.95em;">Refresh Data</button>
-  <span id="dataStatus" style="margin-left:0.8rem;font-size:0.9em;color:#333"></span>
-        <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.5em;border-radius:6px;cursor:pointer;font-size:1.1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear Filters</button>
-      </div>
+    </div>
+    <!-- Row 2: options (centered) -->
+    <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
+      <label style="font-size:0.95em;display:flex;align-items:center;gap:8px;">
+        <input id="enableClustering" type="checkbox"> Enable Clustering
+      </label>
+      <button id="refreshDataBtn" style="background:#e9f5ff;color:var(--blue);font-weight:600;border:1px solid var(--blue);padding:0.45em 1em;border-radius:6px;cursor:pointer;font-size:0.95em;">Refresh Data</button>
+      <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.2em;border-radius:6px;cursor:pointer;font-size:1.0em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear</button>
     </div>
     <script>
   // --- Dynamic Dropdowns and Map Filtering ---
@@ -78,6 +79,7 @@
   const IDB_DB_NAME = 'roadclosures-db';
   const IDB_STORE = 'datasets';
   const IDB_KEY = 'data_v4_final_roadclosures';
+  const IDB_META_KEY = 'data_v4_final_roadclosures_meta';
 
   function openDb() {
     return new Promise((resolve, reject) => {
@@ -139,46 +141,89 @@
   }
 
   async function loadDataAndInit() {
-    const status = { source: 'none', idbTime: 0, fetchTime: 0, records: 0 };
+    // IDB-first model with daily check for current year updates.
+    const today = new Date().toISOString().slice(0,10);
     try {
       const t0 = performance.now();
       const cached = await idbGet(IDB_KEY);
-      status.idbTime = Math.round(performance.now() - t0);
+      const meta = await idbGet(IDB_META_KEY);
+      const idbMs = Math.round(performance.now() - t0);
       if (cached && Array.isArray(cached)) {
-        status.source = 'indexeddb';
-        status.records = cached.length;
-        updateDataStatus(status);
-        console.info('Loaded data from IndexedDB:', cached.length, 'records', 'idbms=', status.idbTime);
-        allData = cached;
-        filteredData = allData;
-  updateDropdowns();
-  scheduleUpdateMapMarkers();
-  attachFilterHandlers();
-        return;
+        // If meta indicates we've already updated today, use cache.
+        const lastFetched = meta && meta.lastFetched ? meta.lastFetched : null;
+        if (lastFetched === today) {
+          updateDataStatus({ source: 'indexeddb', idbTime: idbMs, records: cached.length });
+          console.info('Loaded from IDB (fresh):', cached.length, 'records');
+          allData = cached;
+          filteredData = allData;
+          updateDropdowns();
+          scheduleUpdateMapMarkers();
+          attachFilterHandlers();
+          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
+          return;
+        }
+        // Otherwise attempt to fetch current-year updates, but still use cache if fetch fails.
+        try {
+          const currentYear = new Date().getFullYear().toString();
+          const t1 = performance.now();
+          const resp = await fetch('../data/data_v4_final_roadclosures.json');
+          const data = await resp.json();
+          const fetchMs = Math.round(performance.now() - t1);
+          // Filter only current year records and merge dedup
+          const updates = data.filter(d => getYear(d.Reported_On) === currentYear);
+          // Merge updates into cached by key
+          const keyMap = {};
+          cached.forEach(item => {
+            const key = [item.latitude, item.longitude, item.Road_Name, item.Reported_On, item.Comments].join('|');
+            keyMap[key] = item;
+          });
+          let added = 0;
+          updates.forEach(u => {
+            const key = [u.latitude, u.longitude, u.Road_Name, u.Reported_On, u.Comments].join('|');
+            if (!keyMap[key]) { keyMap[key] = u; added++; }
+          });
+          const merged = Object.values(keyMap);
+          await idbPut(IDB_KEY, merged);
+          await idbPut(IDB_META_KEY, { lastFetched: today });
+          updateDataStatus({ source: 'indexeddb-updated', idbTime: idbMs, fetchTime: fetchMs, records: merged.length });
+          console.info('Merged updates from network. added=', added, 'total=', merged.length);
+          allData = merged;
+          filteredData = allData;
+          updateDropdowns();
+          scheduleUpdateMapMarkers();
+          attachFilterHandlers();
+          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
+          return;
+        } catch (innerErr) {
+          console.warn('Update fetch failed, using cached data', innerErr);
+          updateDataStatus({ source: 'indexeddb-stale', idbTime: idbMs, records: cached.length });
+          allData = cached;
+          filteredData = allData;
+          updateDropdowns();
+          scheduleUpdateMapMarkers();
+          attachFilterHandlers();
+          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
+          return;
+        }
       }
-    } catch (err) {
-      console.warn('IDB read error', err);
-    }
-
-    // Fallback to fetching and caching
-    try {
-      const t1 = performance.now();
-      const resp = await fetch('../data/data_v4_final_roadclosures.json');
-      const data = await resp.json();
-      status.fetchTime = Math.round(performance.now() - t1);
-      status.source = 'network';
-      status.records = Array.isArray(data) ? data.length : 0;
-      updateDataStatus(status);
-      console.info('Fetched data from network:', status.records, 'records', 'fetchms=', status.fetchTime);
-      allData = data;
+      // No cached data: fetch initial dataset and populate IDB (first visit)
+      const t2 = performance.now();
+      const resp2 = await fetch('../data/data_v4_final_roadclosures.json');
+      const data2 = await resp2.json();
+      const fetchMs2 = Math.round(performance.now() - t2);
+      await idbPut(IDB_KEY, data2);
+      await idbPut(IDB_META_KEY, { lastFetched: today });
+      updateDataStatus({ source: 'network-initial', fetchTime: fetchMs2, records: data2.length });
+      console.info('Fetched initial dataset and cached to IDB:', data2.length);
+      allData = data2;
       filteredData = allData;
-  updateDropdowns();
-  scheduleUpdateMapMarkers();
-  attachFilterHandlers();
-      // Cache in background
-      idbPut(IDB_KEY, data).then(() => console.info('Cached dataset to IndexedDB')).catch(e => console.warn('Failed to cache', e));
+      updateDropdowns();
+      scheduleUpdateMapMarkers();
+      attachFilterHandlers();
+      buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
+      return;
     } catch (err) {
-      console.error('Network fetch failed', err);
+      console.error('Data initialization failed', err);
       updateDataStatus({ source: 'error', message: String(err) });
     }
   }
@@ -186,14 +231,21 @@
   function updateDataStatus(info) {
     const el = document.getElementById('dataStatus');
     if (!el) return;
-    if (info.source === 'indexeddb') {
-      el.textContent = `Loaded from cache: ${info.records} records (idb ${info.idbTime} ms)`;
-    } else if (info.source === 'network') {
-      el.textContent = `Fetched ${info.records} records (network ${info.fetchTime} ms)`;
-    } else if (info.source === 'error') {
-      el.textContent = `Error: ${info.message}`;
-    } else {
-      el.textContent = '';
+    switch (info.source) {
+      case 'indexeddb':
+        el.textContent = `Loaded from cache: ${info.records} records (idb ${info.idbTime} ms)`; break;
+      case 'indexeddb-updated':
+        el.textContent = `Cache merged with updates: ${info.records} records (idb ${info.idbTime} ms, fetch ${info.fetchTime} ms)`; break;
+      case 'indexeddb-stale':
+        el.textContent = `Using cached (stale): ${info.records} records (idb ${info.idbTime} ms)`; break;
+      case 'network-initial':
+        el.textContent = `Initial fetch and cached: ${info.records} records (fetch ${info.fetchTime} ms)`; break;
+      case 'network':
+        el.textContent = `Fetched ${info.records} records (network ${info.fetchTime} ms)`; break;
+      case 'error':
+        el.textContent = `Error: ${info.message}`; break;
+      default:
+        el.textContent = '';
     }
   }
 
@@ -215,33 +267,56 @@
       });
       clearBtn._attached = true;
     }
-    const toggle = document.getElementById('noClusterToggle');
-    if (toggle && !toggle._attached) {
-      toggle.addEventListener('change', function() {
+    const clusterToggle = document.getElementById('enableClustering');
+    if (clusterToggle && !clusterToggle._attached) {
+      clusterToggle.addEventListener('change', function() {
         // Re-render markers using the new clustering preference (debounced)
         scheduleUpdateMapMarkers(150);
       });
-      toggle._attached = true;
+      clusterToggle._attached = true;
+    }
+    const yearSelect = document.getElementById('yearFilterSelect');
+    if (yearSelect && !yearSelect._attached) {
+      yearSelect.addEventListener('change', function() {
+        document.getElementById('yearFilterValue').value = this.value || '';
+        onFilterChange();
+        scheduleUpdateMapMarkers();
+      });
+      yearSelect._attached = true;
+    }
+    const districtSelect = document.getElementById('districtFilterSelect');
+    if (districtSelect && !districtSelect._attached) {
+      districtSelect.addEventListener('change', function() {
+        document.getElementById('districtFilterValue').value = this.value || '';
+        onFilterChange();
+        scheduleUpdateMapMarkers();
+      });
+      districtSelect._attached = true;
     }
     const refreshBtn = document.getElementById('refreshDataBtn');
     if (refreshBtn && !refreshBtn._attached) {
       refreshBtn.addEventListener('click', async function() {
-        // Simple UI feedback
         refreshBtn.disabled = true;
         const orig = refreshBtn.textContent;
         refreshBtn.textContent = 'Refreshing...';
         try {
-          await idbDelete(IDB_KEY);
-          console.info('Deleted cached dataset from IndexedDB');
-          // Clear current data and UI
-          allData = [];
-          filteredData = [];
+          // Force fetch full dataset and cache to IDB
+          const t = performance.now();
+          const resp = await fetch('../data/data_v4_final_roadclosures.json');
+          const data = await resp.json();
+          const fetchMs = Math.round(performance.now() - t);
+          await idbPut(IDB_KEY, data);
+          const today = new Date().toISOString().slice(0,10);
+          await idbPut(IDB_META_KEY, { lastFetched: today });
+          console.info('Fetched and cached dataset to IDB:', data.length);
+          updateDataStatus({ source: 'network', fetchTime: fetchMs, records: Array.isArray(data) ? data.length : 0 });
+          allData = data;
+          filteredData = allData;
           updateDropdowns();
           scheduleUpdateMapMarkers();
-          // Force network fetch and re-cache
-          await loadDataAndInit();
         } catch (err) {
           console.warn('Refresh failed', err);
+          updateDataStatus({ source: 'error', message: String(err) });
         }
         refreshBtn.textContent = orig;
         refreshBtn.disabled = false;
@@ -251,46 +326,50 @@
   }
 
   // Add chunked marker addition to avoid blocking the main thread when adding many markers
+  function yearColor(year) {
+    const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+    const idx = (parseInt(year,10) || 0) % palette.length;
+    return palette[idx];
+  }
+
   function chunkedAddMarkers(closures, chunkSize = 400, delay = 20) {
     // closures: array of closure objects already deduplicated
     window.nonClusterMarkers = window.nonClusterMarkers || [];
     let i = 0;
     function work() {
       const end = Math.min(i + chunkSize, closures.length);
-      document.getElementById('perfRendering').textContent = `${i}/${closures.length}`;
       for (; i < end; i++) {
         const closure = closures[i];
         const lat = parseFloat(closure.latitude);
         const lon = parseFloat(closure.longitude);
         if (Number.isFinite(lat) && Number.isFinite(lon)) {
-          const marker = L.marker([lat, lon]);
-          // Defer popup creation until first click to reduce upfront cost
+          const clusterEnabled = document.getElementById('enableClustering') && document.getElementById('enableClustering').checked;
           const content = `<b>${closure.Road_Name}</b><br>` +
             `${closure.Comments}<br>` +
             `<b>County:</b> ${closure.County_Name}<br>` +
             `<b>Reported:</b> ${closure.Reported_On}<br>` +
             `<b>Duration (hrs):</b> ${closure.Duration_Hours}`;
-          marker.on('click', function(e) {
-            if (!this.getPopup()) {
-              this.bindPopup(content).openPopup();
-            }
-          });
-          marker.addTo(map);
-          window.nonClusterMarkers.push(marker);
+          if (clusterEnabled) {
+            const marker = L.marker([lat, lon]);
+            marker.on('click', function(e) { if (!this.getPopup()) this.bindPopup(content).openPopup(); });
+            markerClusterGroup.addLayer(marker);
+          } else {
+            const yr = getYear(closure.Reported_On) || '0';
+            const color = yearColor(yr);
+            const marker = L.circleMarker([lat, lon], { radius: 5, color: '#333', weight: 1, fillColor: color, fillOpacity: 0.85 });
+            marker.on('click', function(e) { if (!this.getPopup()) this.bindPopup(content).openPopup(); });
+            marker.addTo(map);
+            window.nonClusterMarkers.push(marker);
+          }
         }
       }
       if (i < closures.length) {
         setTimeout(work, delay);
+      } else {
+        // finished
       }
     }
     work();
-  }
-
-  // Perf instrumentation
-  let perf = { wheel: 0, zooms: 0, lastZoomStart: 0 };
-  function updatePerfMarkers() {
-    const count = (window.nonClusterMarkers && window.nonClusterMarkers.length) || 0;
-    document.getElementById('perfMarkers').textContent = count;
   }
 
   // Debounced update helper to avoid re-rendering rapidly during wheel/zoom
@@ -299,48 +378,10 @@
     if (__updateTimer) clearTimeout(__updateTimer);
     __updateTimer = setTimeout(() => {
       updateMapMarkers();
-      updatePerfMarkers();
       __updateTimer = null;
     }, delay);
   }
-
-  function clearPerf() {
-    perf.wheel = 0; perf.zooms = 0; perf.lastZoomStart = 0;
-    document.getElementById('perfWheel').textContent = '0';
-    document.getElementById('perfZooms').textContent = '0';
-    document.getElementById('perfZoomTime').textContent = '0';
-    document.getElementById('perfRendering').textContent = 'idle';
-    document.getElementById('perfStatus').textContent = 'Ready';
-  }
-
-  // Attach map event listeners after map exists
-  function attachPerfListeners() {
-    if (!map) return;
-    map.getContainer().addEventListener('wheel', function() {
-      perf.wheel++;
-      document.getElementById('perfWheel').textContent = perf.wheel;
-    }, { passive: true });
-
-    map.on('zoomstart', function() {
-      perf.lastZoomStart = performance.now();
-      document.getElementById('perfStatus').textContent = 'Zooming...';
-    });
-    map.on('zoomend', function() {
-      perf.zooms++;
-      const elapsed = Math.round(performance.now() - perf.lastZoomStart);
-      document.getElementById('perfZooms').textContent = perf.zooms;
-      document.getElementById('perfZoomTime').textContent = elapsed;
-      document.getElementById('perfStatus').textContent = 'Ready';
-      console.info('zoomend elapsed', elapsed, 'ms; scheduling render');
-      // Schedule render (if any) after zoom ends
-      const zap = performance.now();
-      scheduleUpdateMapMarkers(150);
-      // scheduleUpdateMapMarkers will call updateMapMarkers after the delay; log then
-      setTimeout(() => console.info('render scheduled delta', Math.round(performance.now() - zap), 'ms'), 170);
-    });
-
-    document.getElementById('perfClear').addEventListener('click', clearPerf);
-  }
+  // Debounced update helper to avoid re-rendering rapidly during wheel/zoom
 
 
   function getUnique(arr, keyFn) {
@@ -351,6 +392,22 @@
     if (!dateStr) return '';
     const d = new Date(dateStr);
     return isNaN(d) ? '' : d.getFullYear().toString();
+  }
+
+  function buildLegend(years) {
+    const container = document.getElementById('legendContainer');
+    if (!container) return;
+    try {
+      const uniq = Array.from(new Set(years.filter(Boolean))).sort();
+      container.innerHTML = '';
+      uniq.forEach(y => {
+        const span = document.createElement('span');
+        span.style.marginRight = '10px';
+        const col = yearColor(y);
+        span.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${col};margin-right:6px;border:1px solid #333;"></span>${y}`;
+        container.appendChild(span);
+      });
+    } catch (e) { /* noop */ }
   }
 
   function populateDropdown(id, options, label) {
@@ -386,8 +443,36 @@
     }
   }
 
+  // Populate a native <select> element with options
+  function populateSelect(id, options, includeAllLabel) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const allLabel = includeAllLabel || 'All';
+    sel.innerHTML = '';
+    const first = document.createElement('option');
+    first.value = '';
+    first.textContent = `${allLabel}`;
+    sel.appendChild(first);
+    options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt;
+      o.textContent = opt;
+      sel.appendChild(o);
+    });
+  }
+
   function populateMenu(id, options, selected, label) {
-    const menu = document.getElementById(id);
+    // Backwards-compat: if an element with this id exists and is a select, populate that instead
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName && el.tagName.toLowerCase() === 'select') {
+      populateSelect(id, options, `All ${label}`);
+      // select current value if available
+      if (selected) el.value = selected;
+      return;
+    }
+    // legacy nav-menu behavior
+    const menu = el;
     menu.innerHTML = '';
     // Add "All" option
     const allBtn = document.createElement('a');
@@ -470,93 +555,58 @@
     populateMenu('yearMenu', yearSet, document.getElementById('yearFilterValue').value, 'Years');
     populateMenu('districtMenu', districtSet, document.getElementById('districtFilterValue').value, 'Districts');
     populateDropdown('countyFilter', countySet, 'Counties');
+    // Also populate new select elements if present
+    try {
+      populateSelect('yearFilterSelect', yearSet, 'All Years');
+      const ysel = document.getElementById('yearFilterSelect'); if (ysel) ysel.value = document.getElementById('yearFilterValue').value || '';
+    } catch (e) {}
+    try {
+      populateSelect('districtFilterSelect', districtSet, 'All Districts');
+      const dsel = document.getElementById('districtFilterSelect'); if (dsel) dsel.value = document.getElementById('districtFilterValue').value || '';
+    } catch (e) {}
   }
 
   function updateMapMarkers() {
-    if (typeof markers !== 'undefined') {
-      markers.clearLayers();
-      // Remove previous non-clustered markers if any
-      if (window.nonClusterMarkers) {
-        window.nonClusterMarkers.forEach(m => map.removeLayer(m));
-      }
-      window.nonClusterMarkers = [];
-      const selectedCounty = document.getElementById('countyFilter').value;
-      const noCluster = document.getElementById('noClusterToggle') && document.getElementById('noClusterToggle').checked;
-      if (selectedCounty) {
-        // Deduplicate records by lat, lon, road name, reported date, and comments
-        let usedCoords = {};
-        const uniqueClosures = [];
-        filteredData.forEach(closure => {
-          if (closure.latitude && closure.longitude) {
-            const key = [
-              closure.latitude,
-              closure.longitude,
-              closure.Road_Name,
-              closure.Reported_On,
-              closure.Comments
-            ].join('|');
-            if (!usedCoords[key]) {
-              usedCoords[key] = true;
-              uniqueClosures.push(closure);
-            }
-          }
-        });
-        // Show markers without clustering, offset overlapping markers
-        let offsetCoords = {};
-        // When showing non-clustered markers, use chunked rendering to avoid blocking
-        if (noCluster) {
-          chunkedAddMarkers(uniqueClosures);
-        } else {
-          uniqueClosures.forEach((closure, idx) => {
-            let lat = parseFloat(closure.latitude);
-            let lon = parseFloat(closure.longitude);
-            const key = lat + ',' + lon;
-            if (!offsetCoords[key]) offsetCoords[key] = 0;
-            if (offsetCoords[key] > 0) {
-              lat += 0.0002 * offsetCoords[key];
-              lon += 0.0002 * offsetCoords[key];
-            }
-            offsetCoords[key]++;
-            const marker = L.marker([lat, lon]);
-            marker.bindPopup(
-              `<b>${closure.Road_Name}</b><br>` +
-              `${closure.Comments}<br>` +
-              `<b>County:</b> ${closure.County_Name}<br>` +
-              `<b>Reported:</b> ${closure.Reported_On}<br>` +
-              `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
-            );
-            marker.addTo(map);
-            window.nonClusterMarkers.push(marker);
-          });
-        }
-        // Remove cluster group from map if present
-        if (map.hasLayer(markers)) map.removeLayer(markers);
-      } else {
-        // No specific county selected: either show all markers clustered, or
-        // if the user disabled clustering, render markers directly in chunks.
-        if (noCluster) {
-          // Render non-clustered markers in chunks to avoid blocking
-          chunkedAddMarkers(filteredData);
-          if (map.hasLayer(markers)) map.removeLayer(markers);
-        } else {
-          // Show clustered markers (batch-add to cluster for performance)
-          filteredData.forEach(closure => {
-            if (closure.latitude && closure.longitude) {
-              const marker = L.marker([parseFloat(closure.latitude), parseFloat(closure.longitude)]);
-              marker.bindPopup(
-                `<b>${closure.Road_Name}</b><br>` +
-                `${closure.Comments}<br>` +
-                `<b>County:</b> ${closure.County_Name}<br>` +
-                `<b>Reported:</b> ${closure.Reported_On}<br>` +
-                `<b>Duration (hrs):</b> ${closure.Duration_Hours}`
-              );
-              markers.addLayer(marker);
-            }
-          });
-          if (!map.hasLayer(markers)) map.addLayer(markers);
-        }
-      }
+    // clear any existing non-cluster markers and cluster group
+    if (window.nonClusterMarkers && window.nonClusterMarkers.length) {
+      window.nonClusterMarkers.forEach(m => { try { map.removeLayer(m); } catch(e){} });
     }
+    window.nonClusterMarkers = [];
+    try { markerClusterGroup.clearLayers(); } catch (e) {}
+    const selectedCounty = document.getElementById('countyFilter').value;
+    // Always render non-clustered colored circle markers (clustering disabled)
+    // Deduplicate by lat,lon,road,reported,comments
+    const usedCoords = {};
+    const uniqueClosures = [];
+    (selectedCounty ? filteredData.filter(item => item.County_Name === selectedCounty) : filteredData).forEach(closure => {
+      if (closure.latitude && closure.longitude) {
+        const key = [closure.latitude, closure.longitude, closure.Road_Name, closure.Reported_On, closure.Comments].join('|');
+        if (!usedCoords[key]) { usedCoords[key] = true; uniqueClosures.push(closure); }
+      }
+    });
+    // Build legend from available years
+    buildLegend(getUnique(uniqueClosures, item => getYear(item.Reported_On)));
+    // Zoom/fit to selected county extent if a county is selected
+    try {
+      if (selectedCounty && uniqueClosures.length > 0) {
+        const bounds = L.latLngBounds(uniqueClosures.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
+        if (bounds.isValid() && bounds.getNorthEast() && bounds.getSouthWest()) {
+          if (uniqueClosures.length === 1) {
+            // single point: center and zoom in moderately
+            const p = bounds.getCenter();
+            map.setView(p, Math.max(map.getZoom(), 12));
+          } else {
+            map.fitBounds(bounds.pad(0.15));
+          }
+        }
+      } else if (!selectedCounty) {
+        // no county selected: reset to default full-state view
+        try { map.setView([37.822295, -85.76819], 7); } catch (e) { /* noop */ }
+      }
+    } catch (e) { console.warn('Error fitting bounds', e); }
+
+  // Use chunked renderer to add markers (clustered or non-clustered depending on toggle)
+  chunkedAddMarkers(uniqueClosures);
   }
 
   function onFilterChange(e) {
@@ -596,25 +646,21 @@
     // Load data (try IndexedDB first, then network) and initialize the UI
     loadDataAndInit();
   });
-  </script>
-  </div>
+    </script>
+    </div>
 </div>
 
+    <div style="text-align: center; margin-top:8px;">
+      <div id="legendContainer" style="margin-bottom:8px; max-width:800px; text-align:left; display:inline-block;"></div>
+    </div>
     <div style="text-align: center;">
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
+    <div style="text-align:center;margin-top:8px;font-size:0.95em;color:#333;">
+      <span id="dataStatus">&nbsp;</span>
+    </div>
 
-<!-- Performance diagnostic panel -->
-<div id="perfPanel" style="position:fixed;right:12px;top:80px;background:rgba(255,255,255,0.95);padding:10px;border:1px solid #ddd;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.08);font-size:12px;z-index:9999;width:220px;">
-  <strong>Perf</strong>
-  <div id="perfStatus" style="margin-top:6px;color:#333">Ready</div>
-  <div style="margin-top:6px;font-weight:600;color:#333">Markers: <span id="perfMarkers">0</span></div>
-  <div style="margin-top:4px">Wheel events: <span id="perfWheel">0</span></div>
-  <div style="margin-top:4px">Zooms: <span id="perfZooms">0</span></div>
-  <div style="margin-top:6px">Last zoom time: <span id="perfZoomTime">0</span> ms</div>
-  <div style="margin-top:6px">Rendering: <span id="perfRendering">idle</span></div>
-  <div style="margin-top:8px;text-align:right"><button id="perfClear" style="font-size:11px;padding:4px 8px">Clear</button></div>
-</div>
+<!-- perf panel removed -->
 
 <script>
 
@@ -636,19 +682,13 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-// Create a marker cluster group to efficiently display thousands of points
-const markers = L.markerClusterGroup({
-    maxClusterRadius: 60,
-    disableClusteringAtZoom: 12
-});
+// Create marker cluster group (used when clustering enabled)
+let markerClusterGroup = L.markerClusterGroup({ maxClusterRadius: 60, disableClusteringAtZoom: 12 });
+map.addLayer(markerClusterGroup);
 
-// Add marker cluster group and let updateMapMarkers manage adding/removing markers
-map.addLayer(markers);
 // Ensure data is loaded (from IDB if present) and UI is initialized
 loadDataAndInit();
-// Attach perf listeners and update counts
-attachPerfListeners();
-updatePerfMarkers();
+// perf instrumentation removed
 
 </script>
 
