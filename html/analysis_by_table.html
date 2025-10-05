@@ -39,6 +39,11 @@
 <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
   <button id="download-full-csv" class="font-bold">Download Full CSV</button>
   <button id="download-filtered-csv" class="font-bold">Download Filtered CSV</button>
+  <button id="refresh-data-btn" class="font-bold" style="background:#e9f5ff;color:#003764;border:1px solid #003764;">Refresh Data</button>
+</div>
+
+<div style="text-align:center;margin-bottom:8px;font-size:0.95em;color:#333;">
+  <span id="dataStatus">Loading data...</span>
 </div>
 
 <!-- I'm over documenting for the sake of my sanity -->
@@ -51,60 +56,74 @@
   <div id="myGrid" class="ag-theme-alpine"></div>
 </div>
 
+<script src="../js/idb_data_loader.js"></script>
 <script>
 let gridApi = null;  // This will hold our table so we can control it
 let fullData = [];   // This will store ALL our road closure data
 
-// Fetch the data and create the table
-fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => response.json())
-  .then(data => 
-  {
-    fullData = data;
+// Function to initialize/update the table with data
+function initializeTable(data) {
+  fullData = data;
+  
+  // Define the columns we want and how they should look
+  const columnDefs = 
+  [
+    { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true,},
+    { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
+    { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'} },
+    { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true,valueFormatter: params => Number(params.value).toFixed(2), cellStyle: {textAlign: 'center'}  }, // adding rounding for readability
+    { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
+    { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
+    { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}, sort: 'desc', sortindex: 0 }, // default sort by most recent
+    { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
+    { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2)}, // adding rounding for readability
+    { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
+  ];
+  
+  // Set up all the table options and rules
+  const gridOptions = {
+    columnDefs: columnDefs,
+    rowData: data,
     
-    // Define the columns we want and how they should look
-    const columnDefs = 
-    [
-      { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true,},
-      { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
-      { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'} },
-      { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true,valueFormatter: params => Number(params.value).toFixed(2), cellStyle: {textAlign: 'center'}  }, // adding rounding for readability
-      { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
-      { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
-      { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}, sort: 'desc', sortindex: 0 }, // default sort by most recent
-      { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
-      { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2)}, // adding rounding for readability
-      { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
-    ];
-    
-    // Set up all the table options and rules
-    const gridOptions = {
-      columnDefs: columnDefs,
-      rowData: data,
-      
-      defaultColDef: 
-      {
-        flex: 1,
-        minWidth: 120,
-        filter: true,
-        sortable: true,
-        resizable: true,
-        floatingFilter: true // Show little search boxes under each header
-      },
-      pagination: true,
-      paginationPageSize: 10,
-      domLayout: 'autoHeight',
-      onGridReady: function(params) 
-      {
-        gridApi = params.api;
-        // Make all columns auto-size to fit their content perfectly
-        params.columnApi.autoSizeColumns();
-      }
-    };
-    
-    // Generate the table
-    new agGrid.Grid(document.getElementById('myGrid'), gridOptions);
-  });
+    defaultColDef: 
+    {
+      flex: 1,
+      minWidth: 120,
+      filter: true,
+      sortable: true,
+      resizable: true,
+      floatingFilter: true // Show little search boxes under each header
+    },
+    pagination: true,
+    paginationPageSize: 10,
+    domLayout: 'autoHeight',
+    onGridReady: function(params) 
+    {
+      gridApi = params.api;
+      // Make all columns auto-size to fit their content perfectly
+      params.columnApi.autoSizeColumns();
+    }
+  };
+  
+  // Generate the table
+  const gridDiv = document.getElementById('myGrid');
+  gridDiv.innerHTML = ''; // Clear any existing grid
+  new agGrid.Grid(gridDiv, gridOptions);
+}
+
+// Load data using IDB-first strategy
+loadData({
+  onStatusUpdate: function(status) {
+    const el = document.getElementById('dataStatus');
+    if (el) el.textContent = status.message || '';
+  },
+  onDataReady: function(data) {
+    initializeTable(data);
+  }
+}).catch(err => {
+  console.error('Failed to load data', err);
+  document.getElementById('dataStatus').textContent = 'Error loading data';
+});
 
 // DOWNLOAD BUTTON SETUP
 document.addEventListener('DOMContentLoaded', function() 
@@ -115,13 +134,40 @@ document.addEventListener('DOMContentLoaded', function()
     const csv = convertToCSV(fullData);
     downloadCSV(csv, 'road_closures_full.csv');
   }); 
+  
   // "Download Filtered CSV"
   document.getElementById('download-filtered-csv').addEventListener('click', function() 
   {
+    if (!gridApi) {
+      alert('Table not ready yet');
+      return;
+    }
     const filteredRows = [];
     gridApi.forEachNodeAfterFilterAndSort(node => filteredRows.push(node.data));
     const csv = convertToCSV(filteredRows);
     downloadCSV(csv, 'road_closures_filtered.csv');
+  });
+  
+  // "Refresh Data" button
+  document.getElementById('refresh-data-btn').addEventListener('click', async function() {
+    const btn = this;
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Refreshing...';
+    
+    try {
+      const data = await refreshData(function(status) {
+        const el = document.getElementById('dataStatus');
+        if (el) el.textContent = status.message || '';
+      });
+      initializeTable(data);
+    } catch (err) {
+      console.error('Refresh failed', err);
+      document.getElementById('dataStatus').textContent = 'Refresh failed: ' + err.message;
+    }
+    
+    btn.textContent = origText;
+    btn.disabled = false;
   });
 });
 

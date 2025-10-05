@@ -43,6 +43,11 @@
     <div id="monthChart" style="width:100%;height:100%;"></div>
   </div>
 </div>
+<div style="text-align:center;margin-top:8px;font-size:0.95em;color:#333;">
+  <span id="dataStatus">Loading data...</span>
+</div>
+
+<script src="../js/idb_data_loader.js"></script>
 <script>
 var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
@@ -112,12 +117,20 @@ function renderCharts() {
   monthChart.setOption(monthOption);
 }
 
-fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => response.json())
-  .then(data => {
+// Load data using IDB-first strategy
+loadData({
+  onStatusUpdate: function(status) {
+    const el = document.getElementById('dataStatus');
+    if (el) el.textContent = status.message || '';
+  },
+  onDataReady: function(data) {
     rawData = data;
     renderCharts();
-  });
+  }
+}).catch(err => {
+  console.error('Failed to load data', err);
+  document.getElementById('dataStatus').textContent = 'Error loading data';
+});
 
 myChart.on('click', function(params) {
   if (params.componentType === 'series') {

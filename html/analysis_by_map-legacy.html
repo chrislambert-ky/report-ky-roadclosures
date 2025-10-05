@@ -46,6 +46,7 @@
       </div>
       <div id="map" style="width: 800px; height: 600px; display: inline-block;"></div>
     </div>
+<script src="../js/idb_data_loader.js"></script>
 <script>
 
 // Leaflet Map
@@ -72,52 +73,7 @@ const markers = L.markerClusterGroup({
     disableClusteringAtZoom: 12
 });
 // We'll use IndexedDB to cache the JSON and render all points without clustering
-// IndexedDB helpers
-const IDB_DB_NAME = 'roadclosures-db';
-const IDB_STORE = 'datasets';
-const IDB_KEY = 'data_v4_final_roadclosures';
-
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_DB_NAME, 1);
-    req.onupgradeneeded = function(e) {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-    };
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function idbGet(key) {
-  try {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, 'readonly');
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    return null;
-  }
-}
-
-async function idbPut(key, value) {
-  try {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, 'readwrite');
-      const store = tx.objectStore(IDB_STORE);
-      const req = store.put(value, key);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    return false;
-  }
-}
+// Use shared IDB module for consistency and ET-aware freshness
 
 // Chunked renderer (no clustering) with deferred popup binding
 function chunkedAddMarkersNoCluster(data, chunkSize = 500, delay = 25) {
@@ -175,37 +131,25 @@ function buildLegend(years) {
   });
 }
 
-// Load data from IDB or network and render all points without clustering
-async function loadDataAndRenderAll() {
-  try {
-    const cache = await idbGet(IDB_KEY);
-    if (cache && Array.isArray(cache)) {
-      console.info('Loaded from IDB', cache.length);
-      document.getElementById('dataStatusLegacy').textContent = `Loaded from cache: ${cache.length} records`;
-      // build legend from cache years
-      try { buildLegend(cache.map(d => (d.Reported_On && (new Date(d.Reported_On)).getFullYear()) || 'unknown')); } catch(e){}
-      chunkedAddMarkersNoCluster(cache);
-      return;
-    }
-  } catch (err) {
-    console.warn('IDB read failed', err);
-  }
-  try {
-    const resp = await fetch('../data/data_v4_final_roadclosures.json');
-    const data = await resp.json();
-    console.info('Fetched network count', data.length);
-  document.getElementById('dataStatusLegacy').textContent = `Fetched: ${data.length} records`;
-  try { buildLegend(data.map(d => (d.Reported_On && (new Date(d.Reported_On)).getFullYear()) || 'unknown')); } catch(e){}
-  chunkedAddMarkersNoCluster(data);
-  // cache
-  idbPut(IDB_KEY, data).then(() => console.info('Cached to IDB')).catch(e => console.warn('Cache failed', e));
-  } catch (err) {
-    console.error('Fetch failed', err);
-  }
-}
 
-// Start loading and rendering (no clustering)
-loadDataAndRenderAll();
+// Load data from IDB or network and render all points without clustering
+loadData({
+  onStatusUpdate: function(status) {
+    const el = document.getElementById('dataStatusLegacy');
+    if (el) el.textContent = status.message || '';
+  },
+  onDataReady: function(data) {
+    try { 
+      buildLegend(data.map(d => (d.Reported_On && (new Date(d.Reported_On)).getFullYear()) || 'unknown')); 
+    } catch(e) {
+      console.warn('Legend build failed', e);
+    }
+    chunkedAddMarkersNoCluster(data);
+  }
+}).catch(err => {
+  console.error('Data loading failed', err);
+  document.getElementById('dataStatusLegacy').textContent = 'Error loading data';
+});
 
 </script>
 

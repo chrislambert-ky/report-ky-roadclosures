@@ -34,73 +34,90 @@
 <!-- copied and pasted from the apache echart site -->
 <!-- Now I need to customize with my data -->
 <div id="main" style="width:600px;height:400px;margin:2rem auto;">
+</div>
+<div style="text-align:center;margin-top:8px;font-size:0.95em;color:#333;">
+  <span id="dataStatus">Loading data...</span>
+</div>
+
+<script src="../js/idb_data_loader.js"></script>
 <script>
 var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
 
-// Fetch data and create chart
-fetch('../data/data_v4_final_roadclosures.json')
-  .then(response => response.json())
-  .then(data => {
-    // Sum duration hours by year
-    const yearDurations = {};
-    data.forEach(closure => {
-      // Extract the year from the reported date
-      const year = new Date(closure.Reported_On).getFullYear();
-      // Convert duration to number, default to 0 if empty
-      const duration = parseFloat(closure.Duration_Hours) || 0;
-      // Add this closure's duration to the year's total
-      yearDurations[year] = (yearDurations[year] || 0) + duration;
-    });
-    
-    // Convert to arrays for chart - ECharts needs arrays not objects
-    const years = Object.keys(yearDurations).sort();
-    const durations = years.map(year => yearDurations[year].toFixed(2)); // adding rounding for readability
-
-    // Set up the chart configuration
-    const option = {
-      tooltip: 
-      {
-        trigger: 'axis',
-        axisPointer: 
-        {
-          type: 'shadow'
-        }
-      },
-      grid: 
-      {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
-      },
-      xAxis: 
-      {
-        type: 'category',
-        data: years,
-        axisTick: 
-        {
-          alignWithLabel: true
-        }
-      },
-      yAxis: 
-      {
-        type: 'value'
-      },
-      series: 
-      [{
-        name: 'Total Duration (Hours)',
-        type: 'bar',
-        barWidth: '60%',
-        data: durations
-      }]
-    };
-    
-    // Apply the configuration to create the chart
-    myChart.setOption(option);
+// Function to render the chart from data
+function renderChart(data) {
+  // Sum duration hours by year
+  const yearDurations = {};
+  data.forEach(closure => {
+    // Extract the year from the reported date
+    const year = new Date(closure.Reported_On).getFullYear();
+    // Convert duration to number, default to 0 if empty
+    const duration = parseFloat(closure.Duration_Hours) || 0;
+    // Add this closure's duration to the year's total
+    yearDurations[year] = (yearDurations[year] || 0) + duration;
   });
+  
+  // Convert to arrays for chart - ECharts needs arrays not objects
+  const years = Object.keys(yearDurations).sort();
+  const durations = years.map(year => yearDurations[year].toFixed(2)); // adding rounding for readability
+
+  // Set up the chart configuration
+  const option = {
+    tooltip: 
+    {
+      trigger: 'axis',
+      axisPointer: 
+      {
+        type: 'shadow'
+      }
+    },
+    grid: 
+    {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: 
+    {
+      type: 'category',
+      data: years,
+      axisTick: 
+      {
+        alignWithLabel: true
+      }
+    },
+    yAxis: 
+    {
+      type: 'value'
+    },
+    series: 
+    [{
+      name: 'Total Duration (Hours)',
+      type: 'bar',
+      barWidth: '60%',
+      data: durations
+    }]
+  };
+  
+  // Apply the configuration to create the chart
+  myChart.setOption(option);
+}
+
+// Load data using IDB-first strategy
+loadData({
+  onStatusUpdate: function(status) {
+    const el = document.getElementById('dataStatus');
+    if (el) el.textContent = status.message || '';
+  },
+  onDataReady: function(data) {
+    renderChart(data);
+  }
+}).catch(err => {
+  console.error('Failed to load data', err);
+  document.getElementById('dataStatus').textContent = 'Error loading data';
+});
 </script>
-</div>
 
 </body>
 </html>

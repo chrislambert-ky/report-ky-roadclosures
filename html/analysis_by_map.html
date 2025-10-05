@@ -69,178 +69,31 @@
       <button id="refreshDataBtn" style="background:#e9f5ff;color:var(--blue);font-weight:600;border:1px solid var(--blue);padding:0.45em 1em;border-radius:6px;cursor:pointer;font-size:0.95em;">Refresh Data</button>
       <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.2em;border-radius:6px;cursor:pointer;font-size:1.0em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear</button>
     </div>
+    <script src="../js/idb_data_loader.js"></script>
     <script>
   // --- Dynamic Dropdowns and Map Filtering ---
   // These variables will be used by the main script as well
   let allData = [];
   let filteredData = [];
 
-  // --- IndexedDB helpers ---
-  const IDB_DB_NAME = 'roadclosures-db';
-  const IDB_STORE = 'datasets';
-  const IDB_KEY = 'data_v4_final_roadclosures';
-  const IDB_META_KEY = 'data_v4_final_roadclosures_meta';
-
-  function openDb() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(IDB_DB_NAME, 1);
-      req.onupgradeneeded = function(e) {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(IDB_STORE)) {
-          db.createObjectStore(IDB_STORE);
-        }
-      };
-      req.onsuccess = function(e) { resolve(e.target.result); };
-      req.onerror = function(e) { reject(e.target.error); };
-    });
-  }
-
-  async function idbGet(key) {
-    try {
-      const db = await openDb();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE, 'readonly');
-        const store = tx.objectStore(IDB_STORE);
-        const req = store.get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    } catch (err) {
-      return null;
-    }
-  }
-
-  async function idbPut(key, value) {
-    try {
-      const db = await openDb();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE, 'readwrite');
-        const store = tx.objectStore(IDB_STORE);
-        const req = store.put(value, key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => reject(req.error);
-      });
-    } catch (err) {
-      return false;
-    }
-  }
-
-  async function idbDelete(key) {
-    try {
-      const db = await openDb();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(IDB_STORE, 'readwrite');
-        const store = tx.objectStore(IDB_STORE);
-        const req = store.delete(key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = () => reject(req.error);
-      });
-    } catch (err) {
-      return false;
-    }
-  }
-
-  // Return a date string (YYYY-MM-DD) in America/New_York timezone when possible
-  function getETDateString() {
-    try {
-      const now = new Date();
-      const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
-      const y = parts.find(p => p.type === 'year').value;
-      const m = parts.find(p => p.type === 'month').value;
-      const d = parts.find(p => p.type === 'day').value;
-      return `${y}-${m}-${d}`;
-    } catch (e) {
-      return new Date().toISOString().slice(0,10);
-    }
-  }
+  // Use shared IDB module - loadData and refreshData are now available globally
 
   async function loadDataAndInit() {
-    // IDB-first model with daily check for current year updates.
-      // IDB-first model with daily check for current year updates using ET date
-      const today = getETDateString();
-    try {
-      const t0 = performance.now();
-      const cached = await idbGet(IDB_KEY);
-      const meta = await idbGet(IDB_META_KEY);
-      const idbMs = Math.round(performance.now() - t0);
-      if (cached && Array.isArray(cached)) {
-        // If meta indicates we've already updated today, use cache.
-        const lastFetched = meta && meta.lastFetched ? meta.lastFetched : null;
-        if (lastFetched === today) {
-          updateDataStatus({ source: 'indexeddb', idbTime: idbMs, records: cached.length });
-          console.info('Loaded from IDB (fresh):', cached.length, 'records');
-          allData = cached;
-          filteredData = allData;
-          updateDropdowns();
-          scheduleUpdateMapMarkers();
-          attachFilterHandlers();
-          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
-          return;
-        }
-        // Otherwise attempt to fetch current-year updates, but still use cache if fetch fails.
-        try {
-          const currentYear = new Date().getFullYear().toString();
-          const t1 = performance.now();
-          const resp = await fetch('../data/data_v4_final_roadclosures.json');
-          const data = await resp.json();
-          const fetchMs = Math.round(performance.now() - t1);
-          // Filter only current year records and merge dedup
-          const updates = data.filter(d => getYear(d.Reported_On) === currentYear);
-          // Merge updates into cached by key
-          const keyMap = {};
-          cached.forEach(item => {
-            const key = [item.latitude, item.longitude, item.Road_Name, item.Reported_On, item.Comments].join('|');
-            keyMap[key] = item;
-          });
-          let added = 0;
-          updates.forEach(u => {
-            const key = [u.latitude, u.longitude, u.Road_Name, u.Reported_On, u.Comments].join('|');
-            if (!keyMap[key]) { keyMap[key] = u; added++; }
-          });
-          const merged = Object.values(keyMap);
-          await idbPut(IDB_KEY, merged);
-          await idbPut(IDB_META_KEY, { lastFetched: today });
-          updateDataStatus({ source: 'indexeddb-updated', idbTime: idbMs, fetchTime: fetchMs, records: merged.length });
-          console.info('Merged updates from network. added=', added, 'total=', merged.length);
-          allData = merged;
-          filteredData = allData;
-          updateDropdowns();
-          scheduleUpdateMapMarkers();
-          attachFilterHandlers();
-          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
-          return;
-        } catch (innerErr) {
-          console.warn('Update fetch failed, using cached data', innerErr);
-          updateDataStatus({ source: 'indexeddb-stale', idbTime: idbMs, records: cached.length });
-          allData = cached;
-          filteredData = allData;
-          updateDropdowns();
-          scheduleUpdateMapMarkers();
-          attachFilterHandlers();
-          buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
-          return;
-        }
+    // Use shared loadData function with callbacks for custom initialization
+    return loadData({
+      onStatusUpdate: updateDataStatus,
+      onDataReady: function(data) {
+        allData = data;
+        filteredData = allData;
+        updateDropdowns();
+        scheduleUpdateMapMarkers();
+        attachFilterHandlers();
+        buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
       }
-      // No cached data: fetch initial dataset and populate IDB (first visit)
-      const t2 = performance.now();
-  const resp2 = await fetch('../data/data_v4_final_roadclosures.json');
-  const data2 = await resp2.json();
-  const fetchMs2 = Math.round(performance.now() - t2);
-  await idbPut(IDB_KEY, data2);
-  await idbPut(IDB_META_KEY, { lastFetched: today });
-      updateDataStatus({ source: 'network-initial', fetchTime: fetchMs2, records: data2.length });
-      console.info('Fetched initial dataset and cached to IDB:', data2.length);
-      allData = data2;
-      filteredData = allData;
-      updateDropdowns();
-      scheduleUpdateMapMarkers();
-      attachFilterHandlers();
-      buildLegend(getUnique(allData, item => getYear(item.Reported_On)));
-      return;
-    } catch (err) {
+    }).catch(err => {
       console.error('Data initialization failed', err);
       updateDataStatus({ source: 'error', message: String(err) });
-    }
+    });
   }
 
   function updateDataStatus(info) {
@@ -315,16 +168,8 @@
         const orig = refreshBtn.textContent;
         refreshBtn.textContent = 'Refreshing...';
         try {
-          // Force fetch full dataset and cache to IDB
-          const t = performance.now();
-          const resp = await fetch('../data/data_v4_final_roadclosures.json');
-          const data = await resp.json();
-          const fetchMs = Math.round(performance.now() - t);
-          await idbPut(IDB_KEY, data);
-          const etToday = getETDateString();
-          await idbPut(IDB_META_KEY, { lastFetched: etToday });
-          console.info('Fetched and cached dataset to IDB:', data.length);
-          updateDataStatus({ source: 'network', fetchTime: fetchMs, records: Array.isArray(data) ? data.length : 0 });
+          // Use shared refreshData function
+          const data = await refreshData(updateDataStatus);
           allData = data;
           filteredData = allData;
           updateDropdowns();
