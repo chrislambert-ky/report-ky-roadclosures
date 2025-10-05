@@ -99,22 +99,8 @@
   function updateDataStatus(info) {
     const el = document.getElementById('dataStatus');
     if (!el) return;
-    switch (info.source) {
-      case 'indexeddb':
-        el.textContent = `Loaded from cache: ${info.records} records (idb ${info.idbTime} ms)`; break;
-      case 'indexeddb-updated':
-        el.textContent = `Cache merged with updates: ${info.records} records (idb ${info.idbTime} ms, fetch ${info.fetchTime} ms)`; break;
-      case 'indexeddb-stale':
-        el.textContent = `Using cached (stale): ${info.records} records (idb ${info.idbTime} ms)`; break;
-      case 'network-initial':
-        el.textContent = `Initial fetch and cached: ${info.records} records (fetch ${info.fetchTime} ms)`; break;
-      case 'network':
-        el.textContent = `Fetched ${info.records} records (network ${info.fetchTime} ms)`; break;
-      case 'error':
-        el.textContent = `Error: ${info.message}`; break;
-      default:
-        el.textContent = '';
-    }
+    // Use the message from shared module which includes lastFetched timestamp
+    el.textContent = info.message || '';
   }
 
   function attachFilterHandlers() {

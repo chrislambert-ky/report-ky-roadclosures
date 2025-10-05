@@ -152,7 +152,8 @@ async function loadData(callbacks = {}) {
             source: 'indexeddb', 
             idbTime: idbMs, 
             records: cached.length,
-            message: `Loaded from cache: ${cached.length} records (idb ${idbMs} ms)`
+            lastFetched: lastFetched,
+            message: `Loaded from cache: ${cached.length} records (idb ${idbMs} ms) | Last updated: ${lastFetched}`
           });
         }
         console.info('Loaded from IDB (fresh):', cached.length, 'records');
@@ -197,7 +198,8 @@ async function loadData(callbacks = {}) {
             idbTime: idbMs, 
             fetchTime: fetchMs, 
             records: merged.length,
-            message: `Cache merged with updates: ${merged.length} records (idb ${idbMs} ms, fetch ${fetchMs} ms)`
+            lastFetched: today,
+            message: `Cache merged with updates: ${merged.length} records (idb ${idbMs} ms, fetch ${fetchMs} ms) | Last updated: ${today}`
           });
         }
         console.info('Merged updates from network. added=', added, 'total=', merged.length);
@@ -212,7 +214,8 @@ async function loadData(callbacks = {}) {
             source: 'indexeddb-stale', 
             idbTime: idbMs, 
             records: cached.length,
-            message: `Using cached (stale): ${cached.length} records (idb ${idbMs} ms)`
+            lastFetched: lastFetched,
+            message: `Using cached (stale): ${cached.length} records (idb ${idbMs} ms) | Last updated: ${lastFetched || 'unknown'}`
           });
         }
         if (onDataReady) onDataReady(cached);
@@ -234,7 +237,8 @@ async function loadData(callbacks = {}) {
         source: 'network-initial', 
         fetchTime: fetchMs2, 
         records: data2.length,
-        message: `Initial fetch and cached: ${data2.length} records (fetch ${fetchMs2} ms)`
+        lastFetched: today,
+        message: `Initial fetch and cached: ${data2.length} records (fetch ${fetchMs2} ms) | Last updated: ${today}`
       });
     }
     console.info('Fetched initial dataset and cached to IDB:', data2.length);
@@ -275,7 +279,8 @@ async function refreshData(onStatusUpdate) {
         source: 'network', 
         fetchTime: fetchMs, 
         records: Array.isArray(data) ? data.length : 0,
-        message: `Fetched ${data.length} records (network ${fetchMs} ms)`
+        lastFetched: etToday,
+        message: `Fetched ${data.length} records (network ${fetchMs} ms) | Last updated: ${etToday}`
       });
     }
     return data;
