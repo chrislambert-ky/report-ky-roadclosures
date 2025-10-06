@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-468B94S87K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-468B94S87K');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis of KY Road Closures: Map + Table</title>
+    <link rel="stylesheet" href="../css/analysis_by_maptable.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.0/dist/ag-grid-community.min.noStyle.js"></script>
+</head>
+<body>
+    <nav class="main-nav">
+        <a class="nav-link" href="../index.html">Home</a>
+        <a class="nav-link" href="analysis_by_count.html">Analysis by Count</a>
+        <a class="nav-link" href="analysis_by_duration.html">Analysis by Duration</a>
+  <a class="nav-link" href="analysis_by_maptable.html">Map + Table View</a>
+  <a class="nav-link" href="analysis_by_map.html">Map View</a>
+        <a class="nav-link" href="analysis_by_table.html">Table View</a>
+        <a class="nav-link" href="powerbi.html">Power BI Dashboard</a>
+        <a class="nav-link" href="about.html">About</a>
+    </nav>
+
+    <header class="page-header">
+        <h1>Interactive Analysis of KY Road Closures: Map + Table</h1>
+        <h2>Data refreshes daily 12:30am EST</h2>
+    </header>
+
+    <div class="content-container">
+      <section class="map-section">
+        <div class="map-layout">
+          <div class="map-area">
+            <div id="legendContainer" class="legend-container"></div>
+            <div id="map"></div>
+          </div>
+          <aside class="map-side-panel">
+            <div class="side-panel-section">
+              <label class="filter-label" for="yearFilterSelect">Year</label>
+              <select id="yearFilterSelect" class="filter-select filter-select--narrow"></select>
+            </div>
+            <div class="side-panel-section">
+              <label class="filter-label" for="districtFilterSelect">District</label>
+              <select id="districtFilterSelect" class="filter-select filter-select--narrow"></select>
+            </div>
+            <div class="side-panel-section">
+              <label class="filter-label" for="countyFilter">County</label>
+              <select id="countyFilter" class="filter-select filter-select--wide">
+                <option value="">All Counties</option>
+              </select>
+            </div>
+            <div class="side-panel-section">
+              <label class="filter-label" for="routeFilterSelect">Route Prefix</label>
+              <select id="routeFilterSelect" class="filter-select filter-select--wide">
+                <option value="">All Routes</option>
+              </select>
+            </div>
+            <div class="side-panel-section">
+              <label class="filter-label" for="enableClustering">Map Display</label>
+              <label class="map-toggle" for="enableClustering">
+                <input id="enableClustering" type="checkbox"> Enable Clustering
+              </label>
+            </div>
+            <div class="side-panel-section side-panel-buttons">
+              <button id="refreshDataBtn" class="filter-button filter-button--primary">Refresh Data</button>
+              <button id="clearFiltersBtn" class="filter-button filter-button--secondary">Clear Filters</button>
+            </div>
+            <div class="side-panel-section">
+              <button id="download-full-csv" class="action-button">Download Full CSV</button>
+            </div>
+            <div class="side-panel-section">
+              <button id="download-filtered-csv" class="action-button">Download Filtered CSV</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="table-section">
+        <div class="status-line">
+          <span id="dataStatus">Loading data...</span>
+        </div>
+        <div id="aggrid-table-container">
+          <div id="myGrid" class="ag-theme-alpine"></div>
+        </div>
+      </section>
+      <section class="data-note">
+        <p>
+          <strong>UNDERSTAND THE DATA:</strong>
+          This table represents a daily snapshot from a real-time decision support system.<br>
+          The real-time system processes data on Kentucky roadways every 2 minutes.<br>
+          <strong>"Reported On"</strong> and <strong>"End Date"</strong> are obtained through an aggregation of <strong>min(timestamp)</strong> and <strong>max(timestamp)</strong>.<br>
+          Events that are ongoing will typically display with "End Date" of Midnight (00:00) from the previous day's date<br>
+          since the last known occurrence for that road closure was processed at Midnight (00:00) EST.
+        </p>
+      </section>
+    </div>
+
+    <script src="../js/idb_data_loader.js"></script>
+    <script>
+    const defaultCenter = [37.822295, -85.76819];
+    const defaultZoom = 7;
+
+  let map = null;
+  let markerClusterGroup = null;
+  let nonClusterMarkers = [];
+  let fullData = [];
+  let gridApi = null;
+  let currentRenderedData = [];
+  const dropdownFilters = { year: '', district: '', county: '', route: '' };
+
+    function initMap() {
+      map = L.map('map').setView(defaultCenter, defaultZoom);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      markerClusterGroup = L.markerClusterGroup({ maxClusterRadius: 60, disableClusteringAtZoom: 12 });
+      map.addLayer(markerClusterGroup);
+    }
+
+    function clearMarkers() {
+      if (nonClusterMarkers && nonClusterMarkers.length) {
+        nonClusterMarkers.forEach(marker => {
+          try { map.removeLayer(marker); } catch (e) { /* noop */ }
+        });
+      }
+      nonClusterMarkers = [];
+      if (markerClusterGroup) {
+        try { markerClusterGroup.clearLayers(); } catch (e) { /* noop */ }
+      }
+    }
+
+    function getYear(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return isNaN(d) ? '' : d.getFullYear().toString();
+    }
+
+    function normalizeCountyName(value) {
+      if (value === undefined || value === null) return 'Unknown';
+      const trimmed = String(value).trim();
+      return trimmed || 'Unknown';
+    }
+
+    function normalizeRoutePrefix(value) {
+      if (value === undefined || value === null) return 'Unknown';
+      const trimmed = String(value).trim();
+      return trimmed || 'Unknown';
+    }
+
+    function passesDropdownFilters(record, overrides = {}) {
+      const {
+        excludeYear = false,
+        excludeDistrict = false,
+        excludeCounty = false,
+        excludeRoute = false
+      } = overrides;
+
+      const yearVal = getYear(record.Reported_On) || 'Unknown';
+      const districtRaw = record.District_Number !== undefined && record.District_Number !== null ? String(record.District_Number) : 'Unknown';
+      const districtVal = districtRaw.trim() === '' ? 'Unknown' : districtRaw;
+      const countyVal = normalizeCountyName(record.County_Name);
+      const routeVal = normalizeRoutePrefix(record.Route_Prefix);
+
+      if (!excludeYear && dropdownFilters.year && yearVal !== dropdownFilters.year) return false;
+      if (!excludeDistrict && dropdownFilters.district && districtVal !== dropdownFilters.district) return false;
+      if (!excludeCounty && dropdownFilters.county && countyVal !== dropdownFilters.county) return false;
+      if (!excludeRoute && dropdownFilters.route && routeVal !== dropdownFilters.route) return false;
+      return true;
+    }
+
+    function getDropdownFilteredData(options = {}) {
+      if (!Array.isArray(fullData)) return [];
+      return fullData.filter(record => passesDropdownFilters(record, options));
+    }
+
+    function computeCounts(data, keyFn) {
+      const counts = {};
+      data.forEach(item => {
+        const key = keyFn(item);
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function updateSelectOptions(selectEl, options, allLabel, counts, currentValue, formatter) {
+      if (!selectEl) return false;
+      const total = Object.values(counts).reduce((sum, val) => sum + val, 0);
+      selectEl.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = '';
+      allOpt.textContent = `${allLabel}${Number.isFinite(total) && total > 0 ? ` (${total})` : ''}`;
+      selectEl.appendChild(allOpt);
+      let hasValue = false;
+      options.forEach(opt => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt;
+        const count = counts[opt] || 0;
+        optionEl.textContent = formatter ? formatter(opt, count) : `${opt} (${count})`;
+        if (opt === currentValue) hasValue = true;
+        selectEl.appendChild(optionEl);
+      });
+      selectEl.value = hasValue ? currentValue : '';
+      return hasValue;
+    }
+
+    function populateDropdownOptions() {
+      const yearSelect = document.getElementById('yearFilterSelect');
+      const districtSelect = document.getElementById('districtFilterSelect');
+      const countySelect = document.getElementById('countyFilter');
+      const routeSelect = document.getElementById('routeFilterSelect');
+      if (!yearSelect || !districtSelect || !countySelect || !routeSelect) return;
+
+      const yearData = getDropdownFilteredData({ excludeYear: true });
+      const yearCounts = computeCounts(yearData, item => getYear(item.Reported_On) || 'Unknown');
+      const yearOptions = Object.keys(yearCounts).sort((a, b) => {
+        if (a === 'Unknown') return 1;
+        if (b === 'Unknown') return -1;
+        return Number(a) - Number(b);
+      });
+      if (!updateSelectOptions(yearSelect, yearOptions, 'All Years', yearCounts, dropdownFilters.year, (opt, count) => `${opt} (${count})`)) {
+        dropdownFilters.year = '';
+      }
+
+      const districtData = getDropdownFilteredData({ excludeDistrict: true });
+      const districtCounts = computeCounts(districtData, item => {
+        const raw = item.District_Number !== undefined && item.District_Number !== null ? String(item.District_Number) : 'Unknown';
+        return raw.trim() === '' ? 'Unknown' : raw;
+      });
+      const districtOptions = Object.keys(districtCounts).sort((a, b) => {
+        if (a === 'Unknown') return 1;
+        if (b === 'Unknown') return -1;
+        return Number(a) - Number(b);
+      });
+      if (!updateSelectOptions(districtSelect, districtOptions, 'All Districts', districtCounts, dropdownFilters.district, (opt, count) => opt === 'Unknown' ? `Unknown (${count})` : `District ${opt} (${count})`)) {
+        dropdownFilters.district = '';
+      }
+
+      const countyData = getDropdownFilteredData({ excludeCounty: true });
+      const countyCounts = computeCounts(countyData, item => normalizeCountyName(item.County_Name));
+      const countyOptions = Object.keys(countyCounts).sort((a, b) => a.localeCompare(b));
+      if (!updateSelectOptions(countySelect, countyOptions, 'All Counties', countyCounts, dropdownFilters.county, (opt, count) => `${opt} (${count})`)) {
+        dropdownFilters.county = '';
+      }
+
+      const routeData = getDropdownFilteredData({ excludeRoute: true });
+      const routeCounts = computeCounts(routeData, item => normalizeRoutePrefix(item.Route_Prefix));
+      const routeOptions = Object.keys(routeCounts).sort((a, b) => a.localeCompare(b));
+      if (!updateSelectOptions(routeSelect, routeOptions, 'All Routes', routeCounts, dropdownFilters.route, (opt, count) => `${opt} (${count})`)) {
+        dropdownFilters.route = '';
+      }
+    }
+
+    function applyDropdownFiltersAndUpdate({ preserveFilterModel = true } = {}) {
+      if (!gridApi) return;
+      populateDropdownOptions();
+      const filteredRows = getDropdownFilteredData();
+      const currentModel = preserveFilterModel ? gridApi.getFilterModel() : null;
+      gridApi.setRowData(filteredRows);
+      if (currentModel && Object.keys(currentModel).length) {
+        gridApi.setFilterModel(currentModel);
+      } else {
+        gridApi.setFilterModel(null);
+      }
+      gridApi.paginationGoToFirstPage();
+      gridApi.onFilterChanged();
+    }
+
+    function yearColor(year) {
+      const palette = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'];
+      const idx = (parseInt(year, 10) || 0) % palette.length;
+      return palette[idx];
+    }
+
+    function buildLegend(years) {
+      const container = document.getElementById('legendContainer');
+      if (!container) return;
+      const uniqueYears = Array.from(new Set(years.filter(Boolean))).sort();
+      container.innerHTML = '';
+      uniqueYears.forEach(y => {
+        const item = document.createElement('div');
+        item.className = 'legend-swatch';
+        const swatch = document.createElement('span');
+        swatch.className = 'legend-color';
+        swatch.style.background = yearColor(y);
+        item.appendChild(swatch);
+        const label = document.createElement('span');
+        label.textContent = y;
+        item.appendChild(label);
+        container.appendChild(item);
+      });
+      if (uniqueYears.length === 0) {
+        container.textContent = '';
+      }
+    }
+
+    function dedupeClosures(data) {
+      const used = {};
+      const deduped = [];
+      data.forEach(closure => {
+        if (!closure) return;
+        const lat = parseFloat(closure.latitude);
+        const lon = parseFloat(closure.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const key = [closure.latitude, closure.longitude, closure.Road_Name, closure.Reported_On, closure.Comments].join('|');
+        if (!used[key]) {
+          used[key] = true;
+          deduped.push(closure);
+        }
+      });
+      return deduped;
+    }
+
+    function chunkedAddMarkers(closures, chunkSize = 400, delay = 20) {
+      const clusterEnabled = document.getElementById('enableClustering') ? document.getElementById('enableClustering').checked : false;
+      let i = 0;
+      function work() {
+        const end = Math.min(i + chunkSize, closures.length);
+        for (; i < end; i++) {
+          const closure = closures[i];
+          const lat = parseFloat(closure.latitude);
+          const lon = parseFloat(closure.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+          const content = `<b>${closure.Road_Name}</b><br>${closure.Comments}<br>` +
+            `<b>County:</b> ${closure.County_Name}<br>` +
+            `<b>Route:</b> ${closure.Route_Label || ''}<br>` +
+            `<b>Reported:</b> ${closure.Reported_On}<br>` +
+            `<b>Duration (hrs):</b> ${closure.Duration_Hours}`;
+          if (clusterEnabled) {
+            const marker = L.marker([lat, lon]);
+            marker.on('click', function() {
+              if (!this.getPopup()) this.bindPopup(content).openPopup();
+            });
+            markerClusterGroup.addLayer(marker);
+          } else {
+            const yr = getYear(closure.Reported_On) || '0';
+            const color = yearColor(yr);
+            const marker = L.circleMarker([lat, lon], {
+              radius: 5,
+              color: '#333',
+              weight: 1,
+              fillColor: color,
+              fillOpacity: 0.85
+            });
+            marker.on('click', function() {
+              if (!this.getPopup()) this.bindPopup(content).openPopup();
+            });
+            marker.addTo(map);
+            nonClusterMarkers.push(marker);
+          }
+        }
+        if (i < closures.length) {
+          setTimeout(work, delay);
+        }
+      }
+      work();
+    }
+
+    function renderMap(data) {
+      currentRenderedData = Array.isArray(data) ? data : [];
+      clearMarkers();
+      const deduped = dedupeClosures(currentRenderedData);
+      buildLegend(deduped.map(item => getYear(item.Reported_On)));
+
+      if (deduped.length === 0) {
+        try { map.setView(defaultCenter, defaultZoom); } catch (e) { /* noop */ }
+        return;
+      }
+
+      chunkedAddMarkers(deduped);
+
+      const bounds = L.latLngBounds(deduped.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
+      if (bounds.isValid() && bounds.getNorthEast() && bounds.getSouthWest()) {
+        if (deduped.length === 1) {
+          map.setView(bounds.getCenter(), Math.max(map.getZoom(), 12));
+        } else {
+          map.fitBounds(bounds.pad(0.15));
+        }
+      }
+    }
+
+    function getGridFilteredData() {
+      if (!gridApi) return fullData;
+      const filtered = [];
+      gridApi.forEachNodeAfterFilterAndSort(node => {
+        if (node && node.data) filtered.push(node.data);
+      });
+      return filtered;
+    }
+
+    function handleGridFilterChange() {
+      const filtered = getGridFilteredData();
+      renderMap(filtered);
+    }
+
+    function initializeTable(data) {
+      fullData = Array.isArray(data) ? data : [];
+      populateDropdownOptions();
+      const initialRows = getDropdownFilteredData();
+      const columnDefs = [
+        { headerName: 'County', field: 'County_Name', sortable: true, filter: true, resizable: true },
+        { headerName: 'Route', field: 'Route_Label', sortable: true, filter: true, resizable: true },
+        { headerName: 'Route Prefix', field: 'Route_Prefix', sortable: true, filter: true, resizable: true },
+        { headerName: 'Road Name', field: 'Road_Name', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } },
+        { headerName: 'Milepoint', field: 'Milepoint', sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2), cellStyle: { textAlign: 'center' } },
+        { headerName: 'Latitude', field: 'latitude', sortable: true, filter: true, resizable: true },
+        { headerName: 'Longitude', field: 'longitude', sortable: true, filter: true, resizable: true },
+        { headerName: 'Reported On', field: 'Reported_On', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' }, sort: 'desc', sortIndex: 0 },
+        { headerName: 'End Date', field: 'End_Date', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } },
+        { headerName: 'Duration (Hours)', field: 'Duration_Hours', sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2) },
+        { headerName: 'Comments', field: 'Comments', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } }
+      ];
+
+      const gridOptions = {
+        columnDefs,
+        rowData: initialRows,
+        defaultColDef: {
+          flex: 1,
+          minWidth: 120,
+          filter: true,
+          sortable: true,
+          resizable: true,
+          floatingFilter: true
+        },
+  pagination: true,
+  paginationPageSize: 10,
+        domLayout: 'autoHeight',
+        onGridReady: function(params) {
+          gridApi = params.api;
+          params.columnApi.autoSizeColumns();
+          populateDropdownOptions();
+          handleGridFilterChange();
+        },
+        onFilterChanged: handleGridFilterChange,
+        onSortChanged: handleGridFilterChange
+      };
+
+      const gridDiv = document.getElementById('myGrid');
+      gridDiv.innerHTML = '';
+      new agGrid.Grid(gridDiv, gridOptions);
+    }
+
+    function convertToCSV(arr) {
+      const keys = [
+        'County_Name', 'Route_Label', 'Route_Prefix', 'Road_Name', 'Milepoint',
+        'latitude', 'longitude', 'Reported_On', 'End_Date', 'Duration_Hours', 'Comments'
+      ];
+      const header = keys.join(',');
+      const rows = arr.map(row => keys.map(k => '"' + String(row[k] ?? '').replace(/"/g, '""') + '"').join(','));
+      return header + '\n' + rows.join('\n');
+    }
+
+    function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function resetTableFilters() {
+      dropdownFilters.year = '';
+      dropdownFilters.district = '';
+      dropdownFilters.county = '';
+      dropdownFilters.route = '';
+
+      const yearSelect = document.getElementById('yearFilterSelect');
+      const districtSelect = document.getElementById('districtFilterSelect');
+      const countySelect = document.getElementById('countyFilter');
+      const routeSelect = document.getElementById('routeFilterSelect');
+      if (yearSelect) yearSelect.value = '';
+      if (districtSelect) districtSelect.value = '';
+      if (countySelect) countySelect.value = '';
+      if (routeSelect) routeSelect.value = '';
+
+      populateDropdownOptions();
+
+      if (gridApi) {
+        gridApi.setFilterModel(null);
+        applyDropdownFiltersAndUpdate({ preserveFilterModel: false });
+      } else {
+        renderMap(fullData);
+      }
+    }
+
+    function setupDropdownHandlers() {
+      const yearSelect = document.getElementById('yearFilterSelect');
+      if (yearSelect && !yearSelect._attached) {
+        yearSelect.addEventListener('change', function() {
+          dropdownFilters.year = this.value || '';
+          applyDropdownFiltersAndUpdate();
+        });
+        yearSelect._attached = true;
+      }
+
+      const districtSelect = document.getElementById('districtFilterSelect');
+      if (districtSelect && !districtSelect._attached) {
+        districtSelect.addEventListener('change', function() {
+          dropdownFilters.district = this.value || '';
+          applyDropdownFiltersAndUpdate();
+        });
+        districtSelect._attached = true;
+      }
+
+      const countySelect = document.getElementById('countyFilter');
+      if (countySelect && !countySelect._attached) {
+        countySelect.addEventListener('change', function() {
+          dropdownFilters.county = this.value || '';
+          applyDropdownFiltersAndUpdate();
+        });
+        countySelect._attached = true;
+      }
+
+      const routeSelect = document.getElementById('routeFilterSelect');
+      if (routeSelect && !routeSelect._attached) {
+        routeSelect.addEventListener('change', function() {
+          dropdownFilters.route = this.value || '';
+          applyDropdownFiltersAndUpdate();
+        });
+        routeSelect._attached = true;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initMap();
+      setupDropdownHandlers();
+
+      const statusEl = document.getElementById('dataStatus');
+
+      loadData({
+        onStatusUpdate: function(status) {
+          if (statusEl) statusEl.textContent = status.message || '';
+        },
+        onDataReady: function(data) {
+          fullData = Array.isArray(data) ? data : [];
+          populateDropdownOptions();
+          if (gridApi) {
+            applyDropdownFiltersAndUpdate();
+          } else {
+            initializeTable(fullData);
+          }
+        }
+      }).catch(err => {
+        console.error('Failed to load data', err);
+        if (statusEl) statusEl.textContent = 'Error loading data';
+      });
+
+      const clusterToggle = document.getElementById('enableClustering');
+      if (clusterToggle) {
+        clusterToggle.addEventListener('change', function() {
+          renderMap(getGridFilteredData());
+        });
+      }
+
+      const refreshBtn = document.getElementById('refreshDataBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', async function() {
+          refreshBtn.disabled = true;
+          const originalText = refreshBtn.textContent;
+          refreshBtn.textContent = 'Refreshing...';
+          try {
+            const data = await refreshData(function(status) {
+              if (statusEl) statusEl.textContent = status.message || '';
+            });
+            fullData = Array.isArray(data) ? data : [];
+            populateDropdownOptions();
+            if (gridApi) {
+              applyDropdownFiltersAndUpdate();
+            } else {
+              initializeTable(fullData);
+            }
+          } catch (err) {
+            console.error('Refresh failed', err);
+            if (statusEl) statusEl.textContent = 'Refresh failed: ' + err.message;
+          }
+          refreshBtn.textContent = originalText;
+          refreshBtn.disabled = false;
+        });
+      }
+
+      const clearBtn = document.getElementById('clearFiltersBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+          resetTableFilters();
+        });
+      }
+
+      const downloadFull = document.getElementById('download-full-csv');
+      if (downloadFull) {
+        downloadFull.addEventListener('click', function() {
+          const csv = convertToCSV(fullData || []);
+          downloadCSV(csv, 'road_closures_full.csv');
+        });
+      }
+
+      const downloadFiltered = document.getElementById('download-filtered-csv');
+      if (downloadFiltered) {
+        downloadFiltered.addEventListener('click', function() {
+          const data = getGridFilteredData();
+          const csv = convertToCSV(data);
+          downloadCSV(csv, 'road_closures_filtered.csv');
+        });
+      }
+    });
+    </script>
+</body>
+</html>
