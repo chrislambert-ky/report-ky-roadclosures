@@ -37,6 +37,110 @@ body, html
   padding: 0;
 }
 
+.dropdown-filter-menus {
+  display: inline-block;
+  width: 100%;
+  max-width: 800px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  margin-bottom: 8px;
+}
+
+.filter-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(0, 55, 100, 0.04);
+}
+
+.filter-cell--toggle {
+  background: rgba(0, 55, 100, 0.04);
+}
+
+.filter-toggle {
+  font-size: 0.95em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--blue);
+}
+
+.filter-cell--action {
+  background: transparent;
+  padding: 0;
+}
+
+.filter-label {
+  font-weight: bold;
+  margin: 0;
+  font-size: 1.05em;
+  color: var(--blue);
+}
+
+.filter-select {
+  font-size: 1.05em;
+  padding: 0.35em 0.8em;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  min-width: 120px;
+}
+
+.filter-select--narrow {
+  min-width: 110px;
+}
+
+.filter-select--wide {
+  min-width: 220px;
+}
+
+.filter-select {
+  max-width: 100%;
+}
+
+.filter-button {
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95em;
+  padding: 0.45em 1em;
+  border: 1px solid transparent;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+.filter-button--primary {
+  background: #e9f5ff;
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+.filter-button--primary:hover,
+.filter-button--primary:focus {
+  background: var(--light-blue);
+  color: #fff;
+}
+
+.filter-button--secondary {
+  background: var(--light-gray);
+  color: var(--blue);
+  border-color: var(--light-gray);
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.filter-button--secondary:hover,
+.filter-button--secondary:focus {
+  background: #d2d3d3;
+}
+
 h1
 {
   font-family: Arial, Helvetica, sans-serif;
@@ -105,6 +209,16 @@ h2
     text-align: center;
     border-radius: 0;
   }
+
+  .filter-row {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .filter-cell {
+    padding: 0.25rem 0.5rem;
+  }
 }
 
 @media (max-width: 400px) 
@@ -113,5 +227,10 @@ h2
   {
     font-size: 0.95rem;
     padding: 0.5rem 0.5rem;
+  }
+
+  .filter-select {
+    min-width: 100px;
+    font-size: 1em;
   }
 }

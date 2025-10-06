@@ -43,31 +43,41 @@
 
 <div style="text-align: center;">
   <!-- Center filter controls to match the map width (800px) -->
-  <div class="dropdown-filter-menus" style="display: inline-block; width:100%; max-width:800px;">
-    <!-- Row 1: selectors inline with labels next to selects -->
-    <div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;">
-        <label for="yearFilterSelect" style="font-weight:bold;margin:0;">Year</label>
-        <select id="yearFilterSelect" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:120px;"></select>
+  <div class="dropdown-filter-menus">
+    <div class="filter-row filter-row--primary">
+      <div class="filter-cell">
+        <label class="filter-label" for="districtFilterSelect">District</label>
+        <select id="districtFilterSelect" class="filter-select filter-select--narrow"></select>
       </div>
-      <div style="display:inline-flex;align-items:center;gap:8px;">
-        <label for="districtFilterSelect" style="font-weight:bold;margin:0;">District</label>
-        <select id="districtFilterSelect" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:110px;"></select>
-      </div>
-      <div style="display:inline-flex;align-items:center;gap:8px;">
-        <label for="countyFilter" style="font-weight:bold;margin:0;">County</label>
-        <select id="countyFilter" style="font-size:1.05em;padding:0.35em 0.8em;border-radius:4px;border:1px solid #ccc;min-width:160px;">
+      <div class="filter-cell">
+        <label class="filter-label" for="countyFilter">County</label>
+        <select id="countyFilter" class="filter-select filter-select--wide">
           <option value="">All Counties</option>
         </select>
       </div>
+      <div class="filter-cell">
+        <label class="filter-label" for="routeFilterSelect">Route Prefix</label>
+        <select id="routeFilterSelect" class="filter-select filter-select--wide">
+          <option value="">All Routes</option>
+        </select>
+      </div>
     </div>
-    <!-- Row 2: options (centered) -->
-    <div style="display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-      <label style="font-size:0.95em;display:flex;align-items:center;gap:8px;">
-        <input id="enableClustering" type="checkbox"> Enable Clustering
-      </label>
-      <button id="refreshDataBtn" style="background:#e9f5ff;color:var(--blue);font-weight:600;border:1px solid var(--blue);padding:0.45em 1em;border-radius:6px;cursor:pointer;font-size:0.95em;">Refresh Data</button>
-      <button id="clearFiltersBtn" style="background:var(--light-gray);color:var(--blue);font-weight:bold;border:none;padding:0.6em 1.2em;border-radius:6px;cursor:pointer;font-size:1.0em;box-shadow:0 2px 8px rgba(0,0,0,0.04);transition:background 0.2s;">Clear</button>
+    <div class="filter-row filter-row--secondary">
+      <div class="filter-cell">
+        <label class="filter-label" for="yearFilterSelect">Year</label>
+        <select id="yearFilterSelect" class="filter-select filter-select--narrow"></select>
+      </div>
+      <div class="filter-cell filter-cell--toggle">
+        <label class="filter-toggle" for="enableClustering">
+          <input id="enableClustering" type="checkbox"> Enable Clustering
+        </label>
+      </div>
+      <div class="filter-cell filter-cell--action">
+        <button id="refreshDataBtn" class="filter-button filter-button--primary">Refresh Data</button>
+      </div>
+      <div class="filter-cell filter-cell--action">
+        <button id="clearFiltersBtn" class="filter-button filter-button--secondary">Clear</button>
+      </div>
     </div>
     <script src="../js/idb_data_loader.js"></script>
     <script>
@@ -109,12 +119,25 @@
   countyEl.addEventListener('change', function(){ onFilterChange(); scheduleUpdateMapMarkers(); });
       countyEl._attached = true;
     }
+    const routeSelect = document.getElementById('routeFilterSelect');
+    if (routeSelect && !routeSelect._attached) {
+      routeSelect.addEventListener('change', function() {
+        const routeHidden = document.getElementById('routeFilterValue');
+        if (routeHidden) routeHidden.value = this.value || '';
+        onFilterChange();
+        scheduleUpdateMapMarkers();
+      });
+      routeSelect._attached = true;
+    }
     const clearBtn = document.getElementById('clearFiltersBtn');
     if (clearBtn && !clearBtn._attached) {
       clearBtn.addEventListener('click', function() {
         document.getElementById('yearFilterValue').value = '';
         document.getElementById('districtFilterValue').value = '';
         document.getElementById('countyFilter').value = '';
+        const routeHidden = document.getElementById('routeFilterValue');
+        if (routeHidden) routeHidden.value = '';
+        if (routeSelect) routeSelect.value = '';
         filterData();
         updateDropdowns();
         scheduleUpdateMapMarkers();
@@ -240,6 +263,45 @@
     return isNaN(d) ? '' : d.getFullYear().toString();
   }
 
+  function normalizeCountyName(value) {
+    if (value === undefined || value === null) return 'Unknown';
+    const trimmed = String(value).trim();
+    return trimmed || 'Unknown';
+  }
+
+  function normalizeRoutePrefix(value) {
+    if (value === undefined || value === null) return 'Unknown';
+    const trimmed = String(value).trim();
+    return trimmed || 'Unknown';
+  }
+
+  function applyFilters(sourceData, options = {}) {
+    const {
+      excludeYear = false,
+      excludeDistrict = false,
+      excludeCounty = false,
+      excludeRoute = false
+    } = options;
+
+    const yearValue = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
+    const districtValue = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
+    const countyValue = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
+    const routeValue = document.getElementById('routeFilterValue') ? document.getElementById('routeFilterValue').value : '';
+
+    return sourceData.filter(item => {
+      const itemYear = getYear(item.Reported_On);
+      const itemDistrict = item.District_Number !== undefined && item.District_Number !== null ? String(item.District_Number) : 'Unknown';
+      const itemCounty = normalizeCountyName(item.County_Name);
+      const itemRoute = normalizeRoutePrefix(item.Route_Prefix);
+
+      if (!excludeYear && yearValue && itemYear !== yearValue) return false;
+      if (!excludeDistrict && districtValue && itemDistrict !== districtValue) return false;
+      if (!excludeCounty && countyValue && itemCounty !== countyValue) return false;
+      if (!excludeRoute && routeValue && itemRoute !== routeValue) return false;
+      return true;
+    });
+  }
+
   function buildLegend(years) {
     const container = document.getElementById('legendContainer');
     if (!container) return;
@@ -256,31 +318,15 @@
     } catch (e) { /* noop */ }
   }
 
-  function populateDropdown(id, options, label) {
+  function populateDropdown(id, options, label, baseData) {
     const select = document.getElementById(id);
-    // For county dropdown, show counts if id === 'countyFilter'
+    if (!select) return;
     if (id === 'countyFilter') {
-      // Get selected year
-      const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
-      // Get selected district
-      const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
-      // Filter data by year only (not district)
-      let dataForCount = allData;
-      if (selectedYear) {
-        dataForCount = allData.filter(item => getYear(item.Reported_On) === selectedYear);
-      }
-      // If district is selected, only show counties in that district
-      let countyOptions = options;
-      if (selectedDistrict) {
-        countyOptions = getUnique(
-          allData.filter(item => String(item.District_Number) === selectedDistrict),
-          item => item.County_Name
-        );
-      }
-      select.innerHTML = `<option value="">All ${label}</option>` +
-        countyOptions.map(opt => {
-          // Count records for this county (filtered by year only)
-          const count = dataForCount.filter(item => item.County_Name === opt).length;
+      const data = Array.isArray(baseData) ? baseData : allData;
+      const total = data.length;
+      select.innerHTML = `<option value="">All ${label}${Number.isFinite(total) ? ` (${total})` : ''}</option>` +
+        options.map(opt => {
+          const count = data.filter(item => normalizeCountyName(item.County_Name) === opt).length;
           return `<option value="${opt}">${opt} (${count})</option>`;
         }).join('');
     } else {
@@ -289,56 +335,53 @@
     }
   }
 
+  function defaultOptionLabel(value, count, type) {
+    if (type === 'district' || type === 'districtFilterSelect') {
+      if (value === 'Unknown') return `Unknown (${count})`;
+      return `District ${value} (${count})`;
+    }
+    return `${value} (${count})`;
+  }
+
   // Populate a native <select> element with options
-  function populateSelect(id, options, includeAllLabel) {
+  function populateSelect(id, options, includeAllLabel, config = {}) {
     const sel = document.getElementById(id);
     if (!sel) return;
     const allLabel = includeAllLabel || 'All';
+    const baseData = Array.isArray(config.baseData) ? config.baseData : allData;
+    const optionType = config.optionType || id;
     sel.innerHTML = '';
+
     const first = document.createElement('option');
     first.value = '';
-    // Show total count for the 'All' option when building year/district selects
-    let totalCountForAll = null;
-    if (id === 'yearFilterSelect' || id === 'districtFilterSelect') {
-      // compute counts respecting other active filters but excluding the dimension we are counting
-      const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
-      const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
-      const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
-      totalCountForAll = allData.filter(item => {
-        // For year select, exclude year filter when counting years (we want counts per year across current district/county)
-        const byDistrict = id === 'yearFilterSelect' ? (selectedDistrict ? String(item.District_Number) === selectedDistrict : true) : (selectedYear ? getYear(item.Reported_On) === selectedYear : true);
-        const byCounty = selectedCounty ? item.County_Name === selectedCounty : true;
-        // For district select, exclude district filter when counting districts
-        return byDistrict && byCounty;
-      }).length;
-    }
-    first.textContent = totalCountForAll !== null ? `${allLabel} (${totalCountForAll})` : `${allLabel}`;
+    const totalCount = Number.isFinite(config.allCount) ? config.allCount : baseData.length;
+    first.textContent = Number.isFinite(totalCount) ? `${allLabel} (${totalCount})` : allLabel;
     sel.appendChild(first);
+
     options.forEach(opt => {
       const o = document.createElement('option');
       o.value = opt;
-      // If we are building year or district selects, compute counts that respect other filters
-      if (id === 'yearFilterSelect') {
-        const selectedDistrict = document.getElementById('districtFilterValue') ? document.getElementById('districtFilterValue').value : '';
-        const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
-        const count = allData.filter(item => {
-          return getYear(item.Reported_On) === opt &&
-                 (selectedDistrict ? String(item.District_Number) === selectedDistrict : true) &&
-                 (selectedCounty ? item.County_Name === selectedCounty : true);
-        }).length;
-        o.textContent = `${opt} (${count})`;
-      } else if (id === 'districtFilterSelect') {
-        const selectedYear = document.getElementById('yearFilterValue') ? document.getElementById('yearFilterValue').value : '';
-        const selectedCounty = document.getElementById('countyFilter') ? document.getElementById('countyFilter').value : '';
-        const count = allData.filter(item => {
-          return String(item.District_Number) === opt &&
-                 (selectedYear ? getYear(item.Reported_On) === selectedYear : true) &&
-                 (selectedCounty ? item.County_Name === selectedCounty : true);
-        }).length;
-        o.textContent = `${opt} (${count})`;
-      } else {
-        o.textContent = opt;
+      let count = 0;
+      switch (optionType) {
+        case 'year':
+        case 'yearFilterSelect':
+          count = baseData.filter(item => getYear(item.Reported_On) === opt).length;
+          break;
+        case 'district':
+        case 'districtFilterSelect':
+          count = baseData.filter(item => {
+            const districtValue = item.District_Number !== undefined && item.District_Number !== null ? String(item.District_Number) : 'Unknown';
+            return districtValue === opt;
+          }).length;
+          break;
+        case 'route':
+        case 'routeFilterSelect':
+          count = baseData.filter(item => normalizeRoutePrefix(item.Route_Prefix) === opt).length;
+          break;
+        default:
+          count = baseData.filter(item => item === opt).length;
       }
+      o.textContent = config.formatOption ? config.formatOption(opt, count) : defaultOptionLabel(opt, count, optionType);
       sel.appendChild(o);
     });
   }
@@ -406,45 +449,56 @@
     onFilterChange();
   }
 
-  function filterData() {
-    const year = document.getElementById('yearFilterValue').value;
-    const district = document.getElementById('districtFilterValue').value;
-    const county = document.getElementById('countyFilter').value;
-    filteredData = allData.filter(item => {
-      const itemYear = getYear(item.Reported_On);
-      return (!year || itemYear === year) &&
-             (!district || String(item.District_Number) === district) &&
-             (!county || item.County_Name === county);
-    });
+  function filterData(options = {}) {
+    filteredData = applyFilters(allData, options);
+    return filteredData;
   }
 
   function updateDropdowns() {
-    // Always show all years and districts from allData
-    const yearSet = getUnique(allData, item => getYear(item.Reported_On));
-    let districtSet = getUnique(allData, item => String(item.District_Number));
-    districtSet = districtSet.sort((a, b) => Number(a) - Number(b));
-    // County options filtered by selected district
+    const selectedYear = document.getElementById('yearFilterValue').value;
     const selectedDistrict = document.getElementById('districtFilterValue').value;
-    let countySet;
-    if (selectedDistrict) {
-      countySet = getUnique(
-        allData.filter(item => String(item.District_Number) === selectedDistrict),
-        item => item.County_Name
-      );
-    } else {
-      countySet = getUnique(allData, item => item.County_Name);
-    }
-    populateMenu('yearMenu', yearSet, document.getElementById('yearFilterValue').value, 'Years');
-    populateMenu('districtMenu', districtSet, document.getElementById('districtFilterValue').value, 'Districts');
-    populateDropdown('countyFilter', countySet, 'Counties');
-    // Also populate new select elements if present
+    const selectedCounty = document.getElementById('countyFilter').value;
+    const selectedRoute = document.getElementById('routeFilterValue') ? document.getElementById('routeFilterValue').value : '';
+
+    const yearBase = applyFilters(allData, { excludeYear: true });
+    let yearSet = getUnique(yearBase, item => getYear(item.Reported_On)).filter(Boolean);
+    if (selectedYear && !yearSet.includes(selectedYear)) yearSet.push(selectedYear);
+    yearSet = yearSet.sort((a, b) => Number(a) - Number(b));
+
+    const districtBase = applyFilters(allData, { excludeDistrict: true });
+    let districtSet = getUnique(districtBase, item => item.District_Number !== undefined && item.District_Number !== null ? String(item.District_Number) : 'Unknown');
+    if (selectedDistrict && !districtSet.includes(selectedDistrict)) districtSet.push(selectedDistrict);
+    districtSet = districtSet.sort((a, b) => {
+      if (a === 'Unknown') return 1;
+      if (b === 'Unknown') return -1;
+      return Number(a) - Number(b);
+    });
+
+    const countyBase = applyFilters(allData, { excludeCounty: true });
+    let countySet = getUnique(countyBase, item => normalizeCountyName(item.County_Name));
+    if (selectedCounty && !countySet.includes(selectedCounty)) countySet.push(selectedCounty);
+    countySet = countySet.sort((a, b) => a.localeCompare(b));
+
+    const routeBase = applyFilters(allData, { excludeRoute: true });
+    let routeSet = getUnique(routeBase, item => normalizeRoutePrefix(item.Route_Prefix));
+    if (selectedRoute && !routeSet.includes(selectedRoute)) routeSet.push(selectedRoute);
+    routeSet = routeSet.sort((a, b) => a.localeCompare(b));
+
+    populateMenu('yearMenu', yearSet, selectedYear, 'Years');
+    populateMenu('districtMenu', districtSet, selectedDistrict, 'Districts');
+    populateDropdown('countyFilter', countySet, 'Counties', countyBase);
+
     try {
-      populateSelect('yearFilterSelect', yearSet, 'All Years');
-      const ysel = document.getElementById('yearFilterSelect'); if (ysel) ysel.value = document.getElementById('yearFilterValue').value || '';
+      populateSelect('yearFilterSelect', yearSet, 'All Years', { optionType: 'year', baseData: yearBase });
+      const ysel = document.getElementById('yearFilterSelect'); if (ysel) ysel.value = selectedYear || '';
     } catch (e) {}
     try {
-      populateSelect('districtFilterSelect', districtSet, 'All Districts');
-      const dsel = document.getElementById('districtFilterSelect'); if (dsel) dsel.value = document.getElementById('districtFilterValue').value || '';
+      populateSelect('districtFilterSelect', districtSet, 'All Districts', { optionType: 'district', baseData: districtBase });
+      const dsel = document.getElementById('districtFilterSelect'); if (dsel) dsel.value = selectedDistrict || '';
+    } catch (e) {}
+    try {
+      populateSelect('routeFilterSelect', routeSet, 'All Routes', { optionType: 'route', baseData: routeBase });
+      const rsel = document.getElementById('routeFilterSelect'); if (rsel) rsel.value = selectedRoute || '';
     } catch (e) {}
   }
 
@@ -505,7 +559,8 @@
     const prev = {
       year: document.getElementById('yearFilterValue').value,
       district: document.getElementById('districtFilterValue').value,
-      county: document.getElementById('countyFilter').value
+      county: document.getElementById('countyFilter').value,
+      route: document.getElementById('routeFilterValue') ? document.getElementById('routeFilterValue').value : ''
     };
     filterData();
     updateDropdowns();
@@ -513,6 +568,10 @@
     document.getElementById('yearFilterValue').value = prev.year;
     document.getElementById('districtFilterValue').value = prev.district;
     document.getElementById('countyFilter').value = prev.county;
+    const routeHidden = document.getElementById('routeFilterValue');
+    if (routeHidden) routeHidden.value = prev.route;
+    const routeSelect = document.getElementById('routeFilterSelect');
+    if (routeSelect) routeSelect.value = prev.route;
     filterData(); // filter again in case dropdowns changed
     updateMapMarkers();
   }
@@ -533,6 +592,13 @@
       d.id = 'districtFilterValue';
       d.value = '';
       document.body.appendChild(d);
+    }
+    if (!document.getElementById('routeFilterValue')) {
+      const r = document.createElement('input');
+      r.type = 'hidden';
+      r.id = 'routeFilterValue';
+      r.value = '';
+      document.body.appendChild(r);
     }
     // Load data (try IndexedDB first, then network) and initialize the UI
     loadDataAndInit();
