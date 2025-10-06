@@ -42,6 +42,12 @@
   <div class="chart-container">
     <div id="monthChart" style="width:100%;height:100%;"></div>
   </div>
+  <div class="chart-container">
+    <div id="districtChart" style="width:100%;height:100%;"></div>
+  </div>
+  <div class="chart-container">
+    <div id="countyChart" style="width:100%;height:100%;"></div>
+  </div>
 </div>
 <div style="text-align:center;margin-top:8px;font-size:0.95em;color:#333;">
   <span id="dataStatus">Loading data...</span>
@@ -53,42 +59,74 @@ var chartDom = document.getElementById('main');
 var myChart = echarts.init(chartDom);
 var monthDom = document.getElementById('monthChart');
 var monthChart = echarts.init(monthDom);
+var districtDom = document.getElementById('districtChart');
+var districtChart = echarts.init(districtDom);
+var countyDom = document.getElementById('countyChart');
+var countyChart = echarts.init(countyDom);
 var resetBtn = document.getElementById('resetFilterBtn');
 
 let rawData = [];
 let selectedYear = null;
 let selectedMonth = null;
+let selectedDistrict = null;
+let selectedCounty = null;
+
+let latestDistrictEntries = [];
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+function filterData(options = {}) {
+  const { excludeYear = false, excludeMonth = false, excludeDistrict = false, excludeCounty = false } = options;
+  let data = rawData;
+  if (!excludeYear && selectedYear !== null) {
+    data = data.filter(closure => new Date(closure.Reported_On).getFullYear() === selectedYear);
+  }
+  if (!excludeMonth && selectedMonth !== null) {
+    data = data.filter(closure => new Date(closure.Reported_On).getMonth() === selectedMonth);
+  }
+  if (!excludeDistrict && selectedDistrict !== null) {
+    data = data.filter(closure => {
+      const districtValueRaw = closure.District_Number !== undefined && closure.District_Number !== null ? closure.District_Number : 'Unknown';
+      const districtValue = districtValueRaw === 'Unknown' ? 'Unknown' : Number(districtValueRaw);
+      return districtValue === selectedDistrict;
+    });
+  }
+  if (!excludeCounty && selectedCounty !== null) {
+    data = data.filter(closure => (closure.County_Name || 'Unknown') === selectedCounty);
+  }
+  return data;
+}
+
 function renderCharts() {
-  let filteredData = rawData;
-  if (selectedYear !== null) {
-    filteredData = filteredData.filter(closure => new Date(closure.Reported_On).getFullYear() === selectedYear);
-  }
-  if (selectedMonth !== null) {
-    filteredData = filteredData.filter(closure => new Date(closure.Reported_On).getMonth() === selectedMonth);
-  }
+  const yearData = filterData({ excludeYear: true });
+  const monthData = filterData({ excludeMonth: true });
+  const districtData = filterData({ excludeDistrict: true });
+  const countyData = filterData({ excludeCounty: true });
 
   // Year chart
   const yearCounts = {};
-  filteredData.forEach(closure => {
+  yearData.forEach(closure => {
     const year = new Date(closure.Reported_On).getFullYear();
     yearCounts[year] = (yearCounts[year] || 0) + 1;
   });
-  const years = Object.keys(yearCounts).sort();
+  const years = Object.keys(yearCounts).map(val => Number(val)).sort((a, b) => a - b);
   const counts = years.map(year => yearCounts[year]);
   const yearOption = {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: { type: 'category', data: years, axisTick: { alignWithLabel: true } },
     yAxis: { type: 'value' },
-    series: [{ name: 'Road Closures', type: 'bar', barWidth: '60%', data: counts,
+    series: [{ name: 'Closures by Year', type: 'bar', barWidth: '60%', data: counts,
       itemStyle: {
         color: function(params) {
           if (selectedYear !== null && years[params.dataIndex] == selectedYear) return '#5EB3E4';
-          return '#5470C6'; // ECharts default blue
+          return '#5470C6';
         }
+      },
+      label: {
+        show: true,
+        position: 'top',
+        color: '#000'
       }
     }]
   };
@@ -96,25 +134,121 @@ function renderCharts() {
 
   // Month chart
   const monthCounts = Array(12).fill(0);
-  filteredData.forEach(closure => {
+  monthData.forEach(closure => {
     const month = new Date(closure.Reported_On).getMonth();
     monthCounts[month]++;
   });
   const monthOption = {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', data: monthNames, axisTick: { alignWithLabel: true } },
-    yAxis: { type: 'value' },
+    grid: { left: '5%', right: '4%', bottom: '4%', top: '6%', containLabel: true },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: monthNames, axisTick: { alignWithLabel: true }, inverse: true },
     series: [{ name: 'Closures by Month', type: 'bar', barWidth: '60%', data: monthCounts,
       itemStyle: {
         color: function(params) {
           if (selectedMonth !== null && params.dataIndex === selectedMonth) return '#5EB3E4';
-          return '#5470C6'; // ECharts default blue
+          return '#5470C6';
         }
+      },
+      label: {
+        show: true,
+        position: 'right',
+        color: '#000'
       }
     }]
   };
   monthChart.setOption(monthOption);
+
+  // District chart
+  const districtCounts = {};
+  districtData.forEach(closure => {
+    const districtRaw = closure.District_Number !== undefined && closure.District_Number !== null ? closure.District_Number : 'Unknown';
+    const district = districtRaw === 'Unknown' ? 'Unknown' : Number(districtRaw);
+    districtCounts[district] = (districtCounts[district] || 0) + 1;
+  });
+  const districtEntries = Object.entries(districtCounts)
+    .map(([district, count]) => ({
+      district: district === 'Unknown' ? 'Unknown' : Number(district),
+      count
+    }))
+    .sort((a, b) => b.count - a.count);
+  latestDistrictEntries = districtEntries;
+  const districtNames = districtEntries.map(item => item.district === 'Unknown' ? 'Unknown' : `District ${item.district}`);
+  const districtValues = districtEntries.map(item => item.count);
+  const districtOption = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '4%', right: '4%', bottom: '4%', top: '6%', containLabel: true },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: districtNames, axisTick: { alignWithLabel: true }, inverse: true },
+    series: [{
+      name: 'Closures by District',
+      type: 'bar',
+      barWidth: '60%',
+      data: districtValues,
+      label: {
+        show: true,
+        position: 'right',
+        color: '#000'
+      },
+      itemStyle: {
+        color: function(params) {
+          const entry = districtEntries[params.dataIndex];
+          if (selectedDistrict !== null && entry && entry.district === selectedDistrict) return '#5EB3E4';
+          return '#5470C6';
+        }
+      }
+    }]
+  };
+  districtChart.setOption(districtOption);
+
+  // County chart (Top 15)
+  const countyCounts = {};
+  countyData.forEach(closure => {
+    const county = closure.County_Name || 'Unknown';
+    countyCounts[county] = (countyCounts[county] || 0) + 1;
+  });
+  const allCountyEntries = Object.entries(countyCounts)
+    .map(([county, count]) => ({ county, count }))
+    .sort((a, b) => b.count - a.count);
+  const entryLimit = 15;
+  const displayMin = 14;
+  const entriesToTake = Math.max(displayMin, entryLimit);
+  let countyEntries = allCountyEntries.slice(0, entriesToTake);
+  if (selectedCounty !== null && !countyEntries.some(entry => entry.county === selectedCounty)) {
+    const selectedEntry = allCountyEntries.find(entry => entry.county === selectedCounty);
+    if (selectedEntry) {
+      countyEntries = [selectedEntry, ...countyEntries].filter((entry, index, self) =>
+        self.findIndex(e => e.county === entry.county) === index
+      );
+      countyEntries = countyEntries.slice(0, entriesToTake);
+    }
+  }
+  const countyNames = countyEntries.map(item => item.county);
+  const countyValues = countyEntries.map(item => item.count);
+  const countyOption = {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '4%', right: '4%', bottom: '4%', top: '6%', containLabel: true },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: countyNames, axisTick: { alignWithLabel: true }, inverse: true },
+    series: [{
+      name: 'Closures by County',
+      type: 'bar',
+      barWidth: '60%',
+      data: countyValues,
+      label: {
+        show: true,
+        position: 'right',
+        color: '#000'
+      },
+      itemStyle: {
+        color: function(params) {
+          if (selectedCounty !== null && countyNames[params.dataIndex] === selectedCounty) return '#5EB3E4';
+          return '#5470C6';
+        }
+      }
+    }]
+  };
+  countyChart.setOption(countyOption);
 }
 
 // Load data using IDB-first strategy
@@ -158,10 +292,45 @@ monthChart.on('click', function(params) {
   }
 });
 
+districtChart.on('click', function(params) {
+  if (params.componentType === 'series') {
+    const entry = latestDistrictEntries[params.dataIndex];
+    if (!entry) return;
+    const districtValue = entry.district;
+    if (selectedDistrict === districtValue) {
+      selectedDistrict = null;
+    } else {
+      selectedDistrict = districtValue;
+    }
+    renderCharts();
+  }
+});
+
+countyChart.on('click', function(params) {
+  if (params.componentType === 'series') {
+    const countyName = params.name;
+    if (selectedCounty === countyName) {
+      selectedCounty = null;
+    } else {
+      selectedCounty = countyName;
+    }
+    renderCharts();
+  }
+});
+
 resetBtn.addEventListener('click', function() {
   selectedYear = null;
   selectedMonth = null;
+  selectedDistrict = null;
+  selectedCounty = null;
   renderCharts();
+});
+
+window.addEventListener('resize', function() {
+  myChart.resize();
+  monthChart.resize();
+  districtChart.resize();
+  countyChart.resize();
 });
 </script>
 

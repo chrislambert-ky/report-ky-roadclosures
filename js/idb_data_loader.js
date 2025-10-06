@@ -144,13 +144,13 @@ async function loadData(callbacks = {}) {
     if (cached && Array.isArray(cached)) {
       // Check if cache is fresh (same ET date)
       const lastFetched = meta && meta.lastFetched ? meta.lastFetched : null;
-      
+
       if (lastFetched === today) {
         // Cache is fresh - use it
         if (onStatusUpdate) {
-          onStatusUpdate({ 
-            source: 'indexeddb', 
-            idbTime: idbMs, 
+          onStatusUpdate({
+            source: 'indexeddb',
+            idbTime: idbMs,
             records: cached.length,
             lastFetched: lastFetched,
             message: `Loaded from cache: ${cached.length} records (idb ${idbMs} ms) | Last updated: ${lastFetched}`
@@ -160,62 +160,33 @@ async function loadData(callbacks = {}) {
         if (onDataReady) onDataReady(cached);
         return cached;
       }
-      
-      // Cache is stale - try to fetch current year updates and merge
+
+      // Cache is stale - fetch a fresh copy of the dataset and replace cache
       try {
-        const currentYear = new Date().getFullYear().toString();
-        const t1 = performance.now();
-        const resp = await fetch(DATA_URL);
-        const data = await resp.json();
-        const fetchMs = Math.round(performance.now() - t1);
-        
-        // Filter only current year records and merge dedup
-        const updates = data.filter(d => getYear(d.Reported_On) === currentYear);
-        
-        // Merge updates into cached by key
-        const keyMap = {};
-        cached.forEach(item => {
-          const key = [item.latitude, item.longitude, item.Road_Name, item.Reported_On, item.Comments].join('|');
-          keyMap[key] = item;
-        });
-        
-        let added = 0;
-        updates.forEach(u => {
-          const key = [u.latitude, u.longitude, u.Road_Name, u.Reported_On, u.Comments].join('|');
-          if (!keyMap[key]) { 
-            keyMap[key] = u; 
-            added++; 
-          }
-        });
-        
-        const merged = Object.values(keyMap);
-        await idbPut(IDB_KEY, merged);
-        await idbPut(IDB_META_KEY, { lastFetched: today });
-        
         if (onStatusUpdate) {
-          onStatusUpdate({ 
-            source: 'indexeddb-updated', 
-            idbTime: idbMs, 
-            fetchTime: fetchMs, 
-            records: merged.length,
-            lastFetched: today,
-            message: `Cache merged with updates: ${merged.length} records (idb ${idbMs} ms, fetch ${fetchMs} ms) | Last updated: ${today}`
-          });
-        }
-        console.info('Merged updates from network. added=', added, 'total=', merged.length);
-        if (onDataReady) onDataReady(merged);
-        return merged;
-        
-      } catch (innerErr) {
-        // Update fetch failed - use stale cache
-        console.warn('Update fetch failed, using cached data', innerErr);
-        if (onStatusUpdate) {
-          onStatusUpdate({ 
-            source: 'indexeddb-stale', 
-            idbTime: idbMs, 
+          onStatusUpdate({
+            source: 'indexeddb-stale-refreshing',
+            idbTime: idbMs,
             records: cached.length,
             lastFetched: lastFetched,
-            message: `Using cached (stale): ${cached.length} records (idb ${idbMs} ms) | Last updated: ${lastFetched || 'unknown'}`
+            message: `Cached data last updated ${lastFetched || 'unknown'}; fetching fresh dataset...`
+          });
+        }
+
+        const refreshed = await refreshData(onStatusUpdate);
+        if (onDataReady) onDataReady(refreshed);
+        return refreshed;
+
+      } catch (innerErr) {
+        // Update fetch failed - use stale cache
+        console.warn('Refresh due to stale cache failed; using cached data', innerErr);
+        if (onStatusUpdate) {
+          onStatusUpdate({
+            source: 'indexeddb-stale',
+            idbTime: idbMs,
+            records: cached.length,
+            lastFetched: lastFetched,
+            message: `Using cached (stale): ${cached.length} records (idb ${idbMs} ms) | Last updated: ${lastFetched || 'unknown'} | Refresh failed: ${innerErr && innerErr.message ? innerErr.message : innerErr}`
           });
         }
         if (onDataReady) onDataReady(cached);
