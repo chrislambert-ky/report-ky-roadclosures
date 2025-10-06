@@ -510,6 +510,7 @@
     window.nonClusterMarkers = [];
     try { markerClusterGroup.clearLayers(); } catch (e) {}
     const selectedCounty = document.getElementById('countyFilter').value;
+  const selectedRoute = document.getElementById('routeFilterValue') ? document.getElementById('routeFilterValue').value : '';
     // Always render non-clustered colored circle markers (clustering disabled)
     // Deduplicate by lat,lon,road,reported,comments
     const usedCoords = {};
@@ -526,7 +527,7 @@
     try {
       const selectedDistrict = document.getElementById('districtFilterValue').value;
       // If county selected, we already filtered uniqueClosures to county
-      if ((selectedCounty || selectedDistrict) && uniqueClosures.length > 0) {
+      if ((selectedCounty || selectedDistrict || selectedRoute) && uniqueClosures.length > 0) {
         const bounds = L.latLngBounds(uniqueClosures.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
         if (bounds.isValid() && bounds.getNorthEast() && bounds.getSouthWest()) {
           if (uniqueClosures.length === 1) {
@@ -537,7 +538,7 @@
             map.fitBounds(bounds.pad(0.15));
           }
         }
-      } else if (!selectedCounty && !selectedDistrict) {
+      } else if (!selectedCounty && !selectedDistrict && !selectedRoute) {
         // no county or district selected: reset to default full-state view
         try { map.setView([37.822295, -85.76819], 7); } catch (e) { /* noop */ }
       } else if (selectedDistrict && uniqueClosures.length === 0) {
@@ -545,6 +546,12 @@
         const districtItems = filteredData.filter(item => String(item.District_Number) === selectedDistrict && item.latitude && item.longitude);
         if (districtItems.length > 0) {
           const bounds = L.latLngBounds(districtItems.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
+          if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+        }
+      } else if (selectedRoute && uniqueClosures.length === 0) {
+        const routeItems = filteredData.filter(item => normalizeRoutePrefix(item.Route_Prefix) === selectedRoute && item.latitude && item.longitude);
+        if (routeItems.length > 0) {
+          const bounds = L.latLngBounds(routeItems.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
           if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
         }
       }
