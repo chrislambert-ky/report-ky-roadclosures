@@ -3,7 +3,7 @@
 // This is a personal project to help me learn web development (Node.js, HTML, CSS, JavaScript, etc)
 // I am not a professional software developer.
 // My background is:
-//    - Business Architect / Department of Highways Subject Matter Expert
+//    - Business Intelligence (BI) Architect / Department of Highways Subject Matter Expert
 //    - Python ETLs
 //    - SQL (Google BigQuery, Oracle)
 //    - BI Tools (Looker Studio, Tableau, PowerBI).
