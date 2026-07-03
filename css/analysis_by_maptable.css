@@ -297,6 +297,29 @@ header.page-header h2 {
   min-height: 360px;
 }
 
+/* Match the cleaner table styling with row separators and subtle striping */
+.ag-theme-alpine .ag-row {
+  border-bottom: 1px solid #d8dde6 !important;
+  box-shadow: inset 0 -1px 0 #d8dde6;
+}
+
+.ag-theme-alpine .ag-row-odd {
+  background-color: #edf7fd !important;
+}
+
+.ag-theme-alpine .ag-row-odd .ag-cell {
+  background-color: #edf7fd !important;
+}
+
+.ag-theme-alpine .ag-row-odd .ag-full-width-row {
+  background-color: #edf7fd !important;
+}
+
+.ag-theme-alpine .ag-header,
+.ag-theme-alpine .ag-row-even {
+  background-color: #fff;
+}
+
 footer.page-footer {
   margin-top: 1rem;
   font-size: 0.9em;
