@@ -17,11 +17,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.0/dist/ag-grid-community.min.noStyle.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
 </head>
 <body>
     <nav class="main-nav">
@@ -44,6 +43,7 @@
         <div class="map-layout">
           <div class="map-area">
             <div id="legendContainer" class="legend-container"></div>
+            <div id="mapStatus" class="map-status">Showing 0 records on map</div>
             <div id="map"></div>
           </div>
           <aside class="map-side-panel">
@@ -91,8 +91,8 @@
         <div class="status-line">
           <span id="dataStatus">Loading data...</span>
         </div>
-        <div id="aggrid-table-container">
-          <div id="myGrid" class="ag-theme-alpine"></div>
+        <div id="table-shell">
+          <div id="myTable"></div>
         </div>
       </section>
       <section class="data-note">
@@ -118,6 +118,11 @@
   let fullData = [];
   let gridApi = null;
   let currentRenderedData = [];
+  let currentTableRows = [];
+  let selectedMapRecords = [];
+  let selectedRowElements = [];
+  let activeMapRenderVersion = 0;
+  let pendingMarkerTimer = null;
   const dropdownFilters = { year: '', district: '', county: '', route: '' };
 
     function initMap() {
@@ -129,18 +134,6 @@
 
       markerClusterGroup = L.markerClusterGroup({ maxClusterRadius: 60, disableClusteringAtZoom: 12 });
       map.addLayer(markerClusterGroup);
-    }
-
-    function clearMarkers() {
-      if (nonClusterMarkers && nonClusterMarkers.length) {
-        nonClusterMarkers.forEach(marker => {
-          try { map.removeLayer(marker); } catch (e) { /* noop */ }
-        });
-      }
-      nonClusterMarkers = [];
-      if (markerClusterGroup) {
-        try { markerClusterGroup.clearLayers(); } catch (e) { /* noop */ }
-      }
     }
 
     function getYear(dateStr) {
@@ -265,19 +258,36 @@
       }
     }
 
-    function applyDropdownFiltersAndUpdate({ preserveFilterModel = true } = {}) {
-      if (!gridApi) return;
+    function updateCurrentTableRows() {
+      if (!gridApi) {
+        currentTableRows = Array.isArray(fullData) ? fullData.slice() : [];
+        return;
+      }
+
+      currentTableRows = gridApi.getRows()
+        .filter(row => row.isVisible())
+        .map(row => row.getData());
+    }
+
+    function applyDropdownFiltersAndUpdate() {
       populateDropdownOptions();
       const filteredRows = getDropdownFilteredData();
-      const currentModel = preserveFilterModel ? gridApi.getFilterModel() : null;
-      gridApi.setRowData(filteredRows);
-      if (currentModel && Object.keys(currentModel).length) {
-        gridApi.setFilterModel(currentModel);
-      } else {
-        gridApi.setFilterModel(null);
+      selectedMapRecords = [];
+      selectedRowElements.forEach(rowEl => {
+        rowEl.classList.remove('tabulator-selected');
+        const checkbox = rowEl.querySelector('.map-select-checkbox');
+        if (checkbox) {
+          checkbox.checked = false;
+        }
+      });
+      selectedRowElements = [];
+      currentTableRows = filteredRows;
+      renderMap(filteredRows);
+      if (gridApi) {
+        gridApi.setData(filteredRows);
+        gridApi.setPage(1);
+        updateCurrentTableRows();
       }
-      gridApi.paginationGoToFirstPage();
-      gridApi.onFilterChanged();
     }
 
     function yearColor(year) {
@@ -325,10 +335,27 @@
       return deduped;
     }
 
-    function chunkedAddMarkers(closures, chunkSize = 400, delay = 20) {
+    function clearMarkers() {
+      if (markerClusterGroup) {
+        markerClusterGroup.clearLayers();
+      }
+      if (Array.isArray(nonClusterMarkers)) {
+        nonClusterMarkers.forEach(marker => {
+          if (marker && map) {
+            map.removeLayer(marker);
+          }
+        });
+      }
+      nonClusterMarkers = [];
+    }
+
+    function chunkedAddMarkers(closures, chunkSize = 400, delay = 20, renderVersion = activeMapRenderVersion) {
       const clusterEnabled = document.getElementById('enableClustering') ? document.getElementById('enableClustering').checked : false;
       let i = 0;
       function work() {
+        if (renderVersion !== activeMapRenderVersion) {
+          return;
+        }
         const end = Math.min(i + chunkSize, closures.length);
         for (; i < end; i++) {
           const closure = closures[i];
@@ -363,17 +390,34 @@
             nonClusterMarkers.push(marker);
           }
         }
+        if (renderVersion !== activeMapRenderVersion) {
+          return;
+        }
         if (i < closures.length) {
-          setTimeout(work, delay);
+          pendingMarkerTimer = setTimeout(() => work(), delay);
         }
       }
       work();
     }
 
+    function updateMapStatus(count) {
+      const statusEl = document.getElementById('mapStatus');
+      if (!statusEl) return;
+      const label = Number.isFinite(count) ? count : 0;
+      statusEl.textContent = `Showing ${label} record${label === 1 ? '' : 's'} on map`;
+    }
+
     function renderMap(data) {
       currentRenderedData = Array.isArray(data) ? data : [];
+      activeMapRenderVersion += 1;
+      const renderVersion = activeMapRenderVersion;
+      if (pendingMarkerTimer) {
+        clearTimeout(pendingMarkerTimer);
+        pendingMarkerTimer = null;
+      }
       clearMarkers();
       const deduped = dedupeClosures(currentRenderedData);
+      updateMapStatus(deduped.length);
       buildLegend(deduped.map(item => getYear(item.Reported_On)));
 
       if (deduped.length === 0) {
@@ -381,7 +425,7 @@
         return;
       }
 
-      chunkedAddMarkers(deduped);
+      chunkedAddMarkers(deduped, 400, 20, renderVersion);
 
       const bounds = L.latLngBounds(deduped.map(c => [parseFloat(c.latitude), parseFloat(c.longitude)]).filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1])));
       if (bounds.isValid() && bounds.getNorthEast() && bounds.getSouthWest()) {
@@ -394,64 +438,153 @@
     }
 
     function getGridFilteredData() {
-      if (!gridApi) return fullData;
-      const filtered = [];
-      gridApi.forEachNodeAfterFilterAndSort(node => {
-        if (node && node.data) filtered.push(node.data);
+      return currentTableRows;
+    }
+
+    function syncMapFromTable() {
+      updateCurrentTableRows();
+      renderMap(getMapRowsForCurrentSelection());
+    }
+
+    function attachHeaderFilterListeners() {
+      const tableEl = document.getElementById('myTable');
+      if (!tableEl || tableEl._mapFilterListenerAttached) return;
+      tableEl.addEventListener('input', function(e) {
+        const target = e.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (!target.closest('.tabulator-header-filter')) return;
+        window.setTimeout(syncMapFromTable, 50);
       });
-      return filtered;
+      tableEl._mapFilterListenerAttached = true;
+    }
+
+    function getMapRowsForCurrentSelection() {
+      if (selectedMapRecords.length === 0) {
+        return currentTableRows;
+      }
+      return selectedMapRecords.filter(record => currentTableRows.some(row => row === record));
     }
 
     function handleGridFilterChange() {
-      const filtered = getGridFilteredData();
-      renderMap(filtered);
+      updateCurrentTableRows();
+      if (!selectedMapRecord) {
+        renderMap(currentTableRows);
+      }
+    }
+
+    function clearTableSelection() {
+      selectedRowElements.forEach(rowEl => {
+        rowEl.classList.remove('tabulator-selected');
+        const checkbox = rowEl.querySelector('.map-select-checkbox');
+        if (checkbox) {
+          checkbox.checked = false;
+        }
+      });
+      selectedRowElements = [];
+      selectedMapRecords = [];
+    }
+
+    function toggleSelectedRow(row) {
+      const rowEl = row.getElement();
+      const record = row.getData();
+      const alreadySelected = rowEl.classList.contains('tabulator-selected');
+
+      if (alreadySelected) {
+        rowEl.classList.remove('tabulator-selected');
+        const checkbox = rowEl.querySelector('.map-select-checkbox');
+        if (checkbox) {
+          checkbox.checked = false;
+        }
+        selectedRowElements = selectedRowElements.filter(el => el !== rowEl);
+        selectedMapRecords = selectedMapRecords.filter(item => item !== record);
+      } else {
+        rowEl.classList.add('tabulator-selected');
+        const checkbox = rowEl.querySelector('.map-select-checkbox');
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+        selectedRowElements.push(rowEl);
+        selectedMapRecords.push(record);
+      }
+
+      if (selectedMapRecords.length > 0) {
+        renderMap(selectedMapRecords);
+      } else {
+        renderMap(currentTableRows);
+      }
     }
 
     function initializeTable(data) {
       fullData = Array.isArray(data) ? data : [];
       populateDropdownOptions();
+
       const initialRows = getDropdownFilteredData();
+      currentTableRows = initialRows;
       const columnDefs = [
-        { headerName: 'County', field: 'County_Name', sortable: true, filter: true, resizable: true },
-        { headerName: 'Route', field: 'Route_Label', sortable: true, filter: true, resizable: true },
-        { headerName: 'Route Prefix', field: 'Route_Prefix', sortable: true, filter: true, resizable: true },
-        { headerName: 'Road Name', field: 'Road_Name', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } },
-        { headerName: 'Milepoint', field: 'Milepoint', sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2), cellStyle: { textAlign: 'center' } },
-        { headerName: 'Latitude', field: 'latitude', sortable: true, filter: true, resizable: true },
-        { headerName: 'Longitude', field: 'longitude', sortable: true, filter: true, resizable: true },
-        { headerName: 'Reported On', field: 'Reported_On', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' }, sort: 'desc', sortIndex: 0 },
-        { headerName: 'End Date', field: 'End_Date', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } },
-        { headerName: 'Duration (Hours)', field: 'Duration_Hours', sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2) },
-        { headerName: 'Comments', field: 'Comments', sortable: true, filter: true, resizable: true, cellStyle: { textAlign: 'left' } }
+        {
+          title: '',
+          width: 40,
+          hozAlign: 'center',
+          headerSort: false,
+          resizable: false,
+          cssClass: 'select-column',
+          formatter: function(cell) {
+            const rowEl = cell.getRow().getElement();
+            const checked = rowEl.classList.contains('tabulator-selected') ? ' checked' : '';
+            return `<input type="checkbox" class="map-select-checkbox"${checked} aria-label="Select row" />`;
+          },
+          cellClick: function(e, cell) {
+            e.stopPropagation();
+            if (e.target && e.target.classList.contains('map-select-checkbox')) {
+              toggleSelectedRow(cell.getRow());
+            }
+          }
+        },
+        { title: 'County', field: 'County_Name', sorter: 'string', width: 100, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter County' },
+        { title: 'Route', field: 'Route_Label', sorter: 'string', width: 90, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Route' },
+        { title: 'Road Name', field: 'Road_Name', sorter: 'string', width: 150, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Road' },
+        { title: 'Milepoint', field: 'Milepoint', sorter: 'number', width: 90, formatter: cell => Number(cell.getValue() ?? 0).toFixed(2), headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Milepoint' },
+        { title: 'latitude', field: 'latitude', sorter: 'number', width: 90, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Latitude' },
+        { title: 'longitude', field: 'longitude', sorter: 'number', width: 95, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Longitude' },
+        { title: 'Reported On', field: 'Reported_On', sorter: 'string', width: 145, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Date' },
+        { title: 'End Date', field: 'End_Date', sorter: 'string', width: 120, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter End Date' },
+        { title: 'Duration(Hours)', field: 'Duration_Hours', sorter: 'number', width: 120, formatter: cell => Number(cell.getValue() ?? 0).toFixed(2), headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Duration' },
+        { title: 'Comments', field: 'Comments', sorter: 'string', width: 180, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Comments' }
       ];
 
-      const gridOptions = {
-        columnDefs,
-        rowData: initialRows,
-        defaultColDef: {
-          flex: 1,
-          minWidth: 120,
-          filter: true,
-          sortable: true,
-          resizable: true,
-          floatingFilter: true
-        },
-  pagination: true,
-  paginationPageSize: 10,
-        domLayout: 'autoHeight',
-        onGridReady: function(params) {
-          gridApi = params.api;
-          params.columnApi.autoSizeColumns();
-          populateDropdownOptions();
-          handleGridFilterChange();
-        },
-        onFilterChanged: handleGridFilterChange,
-        onSortChanged: handleGridFilterChange
-      };
+      const tableContainer = document.getElementById('myTable');
+      if (!tableContainer) return;
 
-      const gridDiv = document.getElementById('myGrid');
-      gridDiv.innerHTML = '';
-      new agGrid.Grid(gridDiv, gridOptions);
+      if (gridApi) {
+        gridApi.destroy();
+      }
+
+      gridApi = new Tabulator(tableContainer, {
+        data: initialRows,
+        layout: 'fitDataStretch',
+        responsiveLayout: 'collapse',
+        pagination: true,
+        paginationSize: 10,
+        placeholder: 'No rows found',
+        columns: columnDefs,
+        initialSort: [{ column: 'Reported_On', dir: 'desc' }],
+        resizableColumns: false,
+        movableColumns: false,
+        rowFormatter: function(row) {
+          row.getElement().style.minHeight = '24px';
+        },
+        rowClick: function(e, row) {
+          toggleSelectedRow(row);
+        },
+        dataFiltered: function() {
+          syncMapFromTable();
+        }
+      });
+
+      attachHeaderFilterListeners();
+      window.gridApi = gridApi;
+      updateCurrentTableRows();
+      renderMap(initialRows);
     }
 
     function convertToCSV(arr) {
@@ -482,6 +615,8 @@
       dropdownFilters.county = '';
       dropdownFilters.route = '';
 
+      clearTableSelection();
+
       const yearSelect = document.getElementById('yearFilterSelect');
       const districtSelect = document.getElementById('districtFilterSelect');
       const countySelect = document.getElementById('countyFilter');
@@ -492,13 +627,7 @@
       if (routeSelect) routeSelect.value = '';
 
       populateDropdownOptions();
-
-      if (gridApi) {
-        gridApi.setFilterModel(null);
-        applyDropdownFiltersAndUpdate({ preserveFilterModel: false });
-      } else {
-        renderMap(fullData);
-      }
+      applyDropdownFiltersAndUpdate();
     }
 
     function setupDropdownHandlers() {

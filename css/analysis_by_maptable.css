@@ -238,6 +238,88 @@ header.page-header h2 {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
+#table-shell {
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid #d8dde6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: auto;
+}
+
+#myTable {
+  width: 100%;
+  min-height: 330px;
+  background: #fff;
+}
+
+.tabulator {
+  font-size: 0.92rem;
+  border: 0;
+}
+
+.tabulator .tabulator-header {
+  background: #fff;
+  color: var(--blue);
+  border-bottom: 1px solid #d8dde6;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+  background: #fff;
+  border-right: 1px solid #e7ebf0;
+}
+
+.tabulator .tabulator-header .tabulator-col-content {
+  padding: 0.16rem 0.28rem;
+}
+
+.tabulator .tabulator-header-filter input {
+  height: 20px;
+  padding: 0 0.2rem;
+  font-size: 0.8rem;
+}
+
+.tabulator .tabulator-row {
+  min-height: 24px;
+}
+
+.tabulator .tabulator-row-even {
+  background: #edf7fd;
+}
+
+.tabulator .tabulator-row:hover {
+  background: #f6fbff;
+}
+
+.tabulator .tabulator-row.tabulator-selected {
+  background: #fff5c2;
+}
+
+.tabulator .tabulator-cell {
+  padding: 0.16rem 0.28rem;
+  border-right: 1px solid #e7ebf0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabulator .select-column {
+  padding: 0.12rem 0.2rem;
+}
+
+.map-select-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--blue);
+}
+
+.map-status {
+  font-size: 0.92em;
+  color: var(--blue);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
 .legend-container {
   display: flex;
   flex-wrap: wrap;
@@ -288,36 +370,102 @@ header.page-header h2 {
   color: var(--blue);
 }
 
-#aggrid-table-container {
+#table-shell {
   width: 100%;
+  margin: 0 0 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #d8dde6;
 }
 
-#myGrid {
+#myTable {
   width: 100%;
-  min-height: 360px;
+  min-height: 320px;
+  background: #fff;
 }
 
-/* Match the cleaner table styling with row separators and subtle striping */
-.ag-theme-alpine .ag-row {
-  border-bottom: 1px solid #d8dde6 !important;
-  box-shadow: inset 0 -1px 0 #d8dde6;
+.tabulator {
+  font-size: 0.95rem;
+  border: 0;
 }
 
-.ag-theme-alpine .ag-row-odd {
-  background-color: #edf7fd !important;
+.tabulator .tabulator-header {
+  background: #fff;
+  color: var(--blue);
+  border-bottom: 1px solid #d8dde6;
 }
 
-.ag-theme-alpine .ag-row-odd .ag-cell {
-  background-color: #edf7fd !important;
+.tabulator .tabulator-header .tabulator-col {
+  background: #fff;
+  border-right: 1px solid #e7ebf0;
 }
 
-.ag-theme-alpine .ag-row-odd .ag-full-width-row {
-  background-color: #edf7fd !important;
+.tabulator .tabulator-row-even {
+  background: #edf7fd;
 }
 
-.ag-theme-alpine .ag-header,
-.ag-theme-alpine .ag-row-even {
-  background-color: #fff;
+.tabulator .tabulator-row:hover {
+  background: #f6fbff;
+}
+
+.tabulator .tabulator-row.tabulator-selected {
+  background: #fff5c2;
+}
+
+.tabulator .tabulator-cell {
+  padding: 0.2rem 0.35rem;
+  border-right: 1px solid #e7ebf0;
+}
+
+.tabulator .tabulator-footer {
+  background: #fff;
+  border-top: 1px solid #d8dde6;
+}
+
+.ag-theme-alpine .ag-header-row {
+  min-width: 1295px !important;
+}
+
+.ag-theme-alpine .ag-paging-panel {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.5rem;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  min-height: 28px;
+}
+
+.ag-theme-alpine .ag-paging-row-summary-panel {
+  display: block !important;
+  width: 100% !important;
+  flex: 1 1 100% !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ag-theme-alpine .ag-paging-page-summary-panel {
+  display: flex !important;
+  width: 100% !important;
+  flex: 1 1 100% !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.ag-theme-alpine .ag-body-viewport {
+  overflow: visible !important;
+  width: 100% !important;
+  padding-top: 6px;
+  box-sizing: border-box;
+}
+
+.ag-theme-alpine .ag-center-cols-viewport {
+  overflow: visible !important;
+  width: 100% !important;
 }
 
 footer.page-footer {

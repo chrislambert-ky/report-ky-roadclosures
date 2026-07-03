@@ -30,10 +30,9 @@
         <h1>Interactive Analysis of KY Road Closures</h1>
         <h2>Data refreshes daily 12:30am EST</h2>
 
-<!-- I'm using AG Grid for this page. -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.0/dist/ag-grid-community.min.noStyle.js"></script>
+<!-- Tabulator is used here for a lighter table experience. -->
+<link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
 
 <!-- Download buttons -->
 <div style="margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
@@ -52,66 +51,74 @@
 <!-- AI doesn't always get it right with this library. -->
 
 <!-- I have to setup somewhere in the HTML for the script to interact with the html -->
-<div id="aggrid-table-container">
-  <div id="myGrid" class="ag-theme-alpine"></div>
+<div id="table-shell">
+  <div id="myTable"></div>
 </div>
 
 <script src="../js/idb_data_loader.js"></script>
 <script>
-let gridApi = null;  // This will hold our table so we can control it
-let fullData = [];   // This will store ALL our road closure data
+let gridApi = null;
+let fullData = [];
+let currentTableRows = [];
 
-// Function to initialize/update the table with data
-function initializeTable(data) {
-  fullData = data;
-  
-  // Define the columns we want and how they should look
-  const columnDefs = 
-  [
-    { headerName: "County", field: "County_Name", sortable: true, filter: true, resizable: true,},
-    { headerName: "Route", field: "Route_Label", sortable: true, filter: true, resizable: true },
-    { headerName: "Road Name", field: "Road_Name", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'} },
-    { headerName: "Milepoint", field: "Milepoint", sortable: true, filter: true, resizable: true,valueFormatter: params => Number(params.value).toFixed(2), cellStyle: {textAlign: 'center'}  }, // adding rounding for readability
-    { headerName: "latitude", field: "latitude", sortable: true, filter: true, resizable: true },
-    { headerName: "longitude", field: "longitude", sortable: true, filter: true, resizable: true },
-    { headerName: "Reported On", field: "Reported_On", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}, sort: 'desc', sortIndex: 0 }, // default sort by most recent
-    { headerName: "End Date", field: "End_Date", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}  },
-    { headerName: "Duration(Hours)", field: "Duration_Hours", sortable: true, filter: true, resizable: true, valueFormatter: params => Number(params.value).toFixed(2)}, // adding rounding for readability
-    { headerName: "Comments", field: "Comments", sortable: true, filter: true, resizable: true, cellStyle: {textAlign: 'left'}}
-  ];
-  
-  // Set up all the table options and rules
-  const gridOptions = {
-    columnDefs: columnDefs,
-    rowData: data,
-    
-    defaultColDef: 
-    {
-      flex: 1,
-      minWidth: 120,
-      filter: true,
-      sortable: true,
-      resizable: true,
-      floatingFilter: true // Show little search boxes under each header
-    },
-    pagination: true,
-    paginationPageSize: 10,
-    domLayout: 'autoHeight',
-    onGridReady: function(params) 
-    {
-      gridApi = params.api;
-      // Make all columns auto-size to fit their content perfectly
-      params.columnApi.autoSizeColumns();
-    }
-  };
-  
-  // Generate the table
-  const gridDiv = document.getElementById('myGrid');
-  gridDiv.innerHTML = ''; // Clear any existing grid
-  new agGrid.Grid(gridDiv, gridOptions);
+function updateCurrentTableRows() {
+  if (!gridApi) {
+    currentTableRows = fullData.slice();
+    return;
+  }
+
+  currentTableRows = gridApi.getRows()
+    .filter(row => row.isVisible())
+    .map(row => row.getData());
 }
 
-// Load data using IDB-first strategy
+function initializeTable(data) {
+  fullData = Array.isArray(data) ? data : [];
+  currentTableRows = fullData.slice();
+
+  const columnDefs = [
+    { title: 'County', field: 'County_Name', sorter: 'string', width: 100, headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter County' },
+    { title: 'Route', field: 'Route_Label', sorter: 'string', width: 90, headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Route' },
+    { title: 'Road Name', field: 'Road_Name', sorter: 'string', width: 150, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Road' },
+    { title: 'Milepoint', field: 'Milepoint', sorter: 'number', width: 90, formatter: cell => Number(cell.getValue() ?? 0).toFixed(2), headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Milepoint' },
+    { title: 'latitude', field: 'latitude', sorter: 'number', width: 90, headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Latitude' },
+    { title: 'longitude', field: 'longitude', sorter: 'number', width: 95, headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Longitude' },
+    { title: 'Reported On', field: 'Reported_On', sorter: 'string', width: 145, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Date' },
+    { title: 'End Date', field: 'End_Date', sorter: 'string', width: 120, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter End Date' },
+    { title: 'Duration(Hours)', field: 'Duration_Hours', sorter: 'number', width: 120, formatter: cell => Number(cell.getValue() ?? 0).toFixed(2), headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Duration' },
+    { title: 'Comments', field: 'Comments', sorter: 'string', width: 180, formatter: 'plaintext', headerFilter: 'input', headerFilterFunc: 'like', headerFilterLiveFilter: true, headerFilterPlaceholder: 'Filter Comments' }
+  ];
+
+  const tableContainer = document.getElementById('myTable');
+  if (!tableContainer) return;
+
+  if (gridApi) {
+    gridApi.destroy();
+  }
+
+  gridApi = new Tabulator(tableContainer, {
+    data: currentTableRows,
+    layout: 'fitDataStretch',
+    responsiveLayout: false,
+    pagination: true,
+    paginationSize: 10,
+    placeholder: 'No rows found',
+    columns: columnDefs,
+    initialSort: [{ column: 'Reported_On', dir: 'desc' }],
+    resizableColumns: false,
+    movableColumns: false,
+    rowFormatter: function(row) {
+      row.getElement().style.minHeight = '24px';
+    },
+    dataFiltered: function() {
+      updateCurrentTableRows();
+    }
+  });
+
+  window.gridApi = gridApi;
+  updateCurrentTableRows();
+}
+
 loadData({
   onStatusUpdate: function(status) {
     const el = document.getElementById('dataStatus');
@@ -122,39 +129,27 @@ loadData({
   }
 }).catch(err => {
   console.error('Failed to load data', err);
-  document.getElementById('dataStatus').textContent = 'Error loading data';
+  const statusEl = document.getElementById('dataStatus');
+  if (statusEl) statusEl.textContent = 'Error loading data';
 });
 
-// DOWNLOAD BUTTON SETUP
-document.addEventListener('DOMContentLoaded', function() 
-{
-  // "Download Full CSV"
-  document.getElementById('download-full-csv').addEventListener('click', function() 
-  {
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('download-full-csv').addEventListener('click', function() {
     const csv = convertToCSV(fullData);
     downloadCSV(csv, 'road_closures_full.csv');
-  }); 
-  
-  // "Download Filtered CSV"
-  document.getElementById('download-filtered-csv').addEventListener('click', function() 
-  {
-    if (!gridApi) {
-      alert('Table not ready yet');
-      return;
-    }
-    const filteredRows = [];
-    gridApi.forEachNodeAfterFilterAndSort(node => filteredRows.push(node.data));
-    const csv = convertToCSV(filteredRows);
+  });
+
+  document.getElementById('download-filtered-csv').addEventListener('click', function() {
+    const csv = convertToCSV(currentTableRows);
     downloadCSV(csv, 'road_closures_filtered.csv');
   });
-  
-  // "Refresh Data" button
+
   document.getElementById('refresh-data-btn').addEventListener('click', async function() {
     const btn = this;
     btn.disabled = true;
     const origText = btn.textContent;
     btn.textContent = 'Refreshing...';
-    
+
     try {
       const data = await refreshData(function(status) {
         const el = document.getElementById('dataStatus');
@@ -163,30 +158,27 @@ document.addEventListener('DOMContentLoaded', function()
       initializeTable(data);
     } catch (err) {
       console.error('Refresh failed', err);
-      document.getElementById('dataStatus').textContent = 'Refresh failed: ' + err.message;
+      const statusEl = document.getElementById('dataStatus');
+      if (statusEl) statusEl.textContent = 'Refresh failed: ' + err.message;
     }
-    
+
     btn.textContent = origText;
     btn.disabled = false;
   });
 });
 
-// Converts our data into CSV format
 function convertToCSV(arr) {
-  // These are the columns we want, in the order we want them
   const keys = [
-    "County_Name", "Route_Label", "Road_Name", "Milepoint",
-    "latitude", "longitude", "Reported_On", "End_Date", 
-    "Duration_Hours", "Comments"
+    'County_Name', 'Route_Label', 'Road_Name', 'Milepoint',
+    'latitude', 'longitude', 'Reported_On', 'End_Date',
+    'Duration_Hours', 'Comments'
   ];
-  
+
   const header = keys.join(',');
-  // AI use : this was tricky to figure out.
   const rows = arr.map(row => keys.map(k => '"' + String(row[k] ?? '').replace(/"/g, '""') + '"').join(','));
   return header + '\n' + rows.join('\n');
 }
 
-// Function to download the CSV file
 function downloadCSV(csv, filename) {
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);

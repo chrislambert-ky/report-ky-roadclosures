@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analysis of KY Road Closures: Grid.js Test</title>
+  <link rel="stylesheet" href="../css/analysis_by_table_gridjs.css">
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+</head>
+<body>
+  <nav class="main-nav">
+    <a class="nav-link" href="../index.html">Home</a>
+    <a class="nav-link" href="analysis_by_count.html">Analysis by Count</a>
+    <a class="nav-link" href="analysis_by_duration.html">Analysis by Duration</a>
+    <a class="nav-link" href="analysis_by_maptable.html">Map + Table View</a>
+    <a class="nav-link" href="analysis_by_table.html">Tabulator View</a>
+    <a class="nav-link" href="analysis_by_table_gridjs.html">Grid.js Test</a>
+    <a class="nav-link" href="about.html">About</a>
+  </nav>
+
+  <header class="page-header">
+    <h1>Grid.js Test View</h1>
+    <h2>Same data, lightweight comparison page</h2>
+  </header>
+
+  <div class="toolbar">
+    <label class="search-label" for="searchInput">Search</label>
+    <input id="searchInput" class="search-input" type="text" placeholder="Search county, route, road, comments...">
+    <button id="download-filtered-csv" class="font-bold">Download Filtered CSV</button>
+    <button id="refresh-data-btn" class="font-bold secondary">Refresh Data</button>
+  </div>
+
+  <div id="filterRow" class="filter-row"></div>
+  <div id="statusLine" class="status-line">Loading data...</div>
+  <div id="grid"></div>
+
+  <script src="../js/idb_data_loader.js"></script>
+  <script>
+    let fullData = [];
+    let visibleRows = [];
+    let gridInstance = null;
+    let columnFilters = {};
+
+    function normalizeValue(value) {
+      return String(value ?? '').toLowerCase().trim();
+    }
+
+    function filterRows(rows, searchText) {
+      const terms = searchText.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      return rows.filter(row => {
+        const haystack = [
+          row.County_Name,
+          row.Route_Label,
+          row.Route_Prefix,
+          row.Road_Name,
+          row.Milepoint,
+          row.latitude,
+          row.longitude,
+          row.Reported_On,
+          row.End_Date,
+          row.Duration_Hours,
+          row.Comments
+        ].map(normalizeValue).join(' ');
+
+        const matchesGlobalSearch = terms.every(term => haystack.includes(term));
+        const matchesColumnFilters = Object.entries(columnFilters).every(([key, value]) => {
+          if (!value) return true;
+          const cellValue = row[key] ?? '';
+          return String(cellValue).toLowerCase().includes(String(value).toLowerCase());
+        });
+
+        return matchesGlobalSearch && matchesColumnFilters;
+      });
+    }
+
+    function toCsv(rows) {
+      const keys = ['County_Name','Route_Label','Route_Prefix','Road_Name','Milepoint','latitude','longitude','Reported_On','End_Date','Duration_Hours','Comments'];
+      const header = keys.join(',');
+      const body = rows.map(row => keys.map(key => '"' + String(row[key] ?? '').replace(/"/g, '""') + '"').join(','));
+      return header + '\n' + body.join('\n');
+    }
+
+    function downloadCsv(rows, filename) {
+      const blob = new Blob([toCsv(rows)], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderGrid(rows) {
+      visibleRows = rows;
+      const data = rows.map(row => [
+        row.County_Name,
+        row.Route_Label,
+        row.Route_Prefix,
+        row.Road_Name,
+        Number(row.Milepoint ?? 0).toFixed(2),
+        row.latitude,
+        row.longitude,
+        row.Reported_On,
+        row.End_Date,
+        Number(row.Duration_Hours ?? 0).toFixed(2),
+        row.Comments
+      ]);
+
+      if (gridInstance) {
+        gridInstance.updateConfig({ data }).forceRender();
+      } else {
+        gridInstance = new gridjs.Grid({
+          columns: [
+            { name: 'County', width: '90px' },
+            { name: 'Route', width: '90px' },
+            { name: 'Route Prefix', width: '95px' },
+            { name: 'Road Name', width: '170px' },
+            { name: 'Milepoint', width: '90px' },
+            { name: 'Latitude', width: '90px' },
+            { name: 'Longitude', width: '95px' },
+            { name: 'Reported On', width: '125px' },
+            { name: 'End Date', width: '110px' },
+            { name: 'Duration (Hours)', width: '100px' },
+            { name: 'Comments', width: '180px' }
+          ],
+          data,
+          sort: true,
+          pagination: { enabled: true, limit: 10 },
+          search: false,
+          language: {
+            pagination: {
+              previous: 'Prev',
+              next: 'Next',
+              showing: 'Showing',
+              of: 'of',
+              to: 'to',
+              results: 'results'
+            }
+          }
+        }).render(document.getElementById('grid'));
+      }
+    }
+
+    function applySearch() {
+      const text = document.getElementById('searchInput').value;
+      renderGrid(filterRows(fullData, text));
+    }
+
+    function buildFilterRow() {
+      const filterRow = document.getElementById('filterRow');
+      if (!filterRow) return;
+      filterRow.innerHTML = '';
+
+      const fieldMap = [
+        ['County_Name', 'County'],
+        ['Route_Label', 'Route'],
+        ['Route_Prefix', 'Route Prefix'],
+        ['Road_Name', 'Road Name'],
+        ['Milepoint', 'Milepoint'],
+        ['latitude', 'Latitude'],
+        ['longitude', 'Longitude'],
+        ['Reported_On', 'Reported On'],
+        ['End_Date', 'End Date'],
+        ['Duration_Hours', 'Duration'],
+        ['Comments', 'Comments']
+      ];
+
+      fieldMap.forEach(([field, label]) => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = label;
+        input.setAttribute('data-field', field);
+        input.addEventListener('input', function() {
+          columnFilters[field] = this.value;
+          applySearch();
+        });
+        filterRow.appendChild(input);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      buildFilterRow();
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', applySearch);
+      }
+
+      document.getElementById('download-filtered-csv').addEventListener('click', function() {
+        downloadCsv(visibleRows, 'road_closures_gridjs_filtered.csv');
+      });
+
+      document.getElementById('refresh-data-btn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = 'Refreshing...';
+        try {
+          const data = await refreshData(function(status) {
+            const el = document.getElementById('statusLine');
+            if (el) el.textContent = status.message || '';
+          });
+          fullData = Array.isArray(data) ? data : [];
+          applySearch();
+        } catch (err) {
+          console.error('Refresh failed', err);
+          const statusEl = document.getElementById('statusLine');
+          if (statusEl) statusEl.textContent = 'Refresh failed: ' + err.message;
+        }
+        btn.textContent = originalText;
+        btn.disabled = false;
+      });
+
+      loadData({
+        onStatusUpdate: function(status) {
+          const el = document.getElementById('statusLine');
+          if (el) el.textContent = status.message || '';
+        },
+        onDataReady: function(data) {
+          fullData = Array.isArray(data) ? data : [];
+          applySearch();
+        }
+      }).catch(err => {
+        console.error('Failed to load data', err);
+        const statusEl = document.getElementById('statusLine');
+        if (statusEl) statusEl.textContent = 'Error loading data';
+      });
+    });
+  </script>
+</body>
+</html>

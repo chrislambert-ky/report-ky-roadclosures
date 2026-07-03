@@ -1,0 +1,145 @@
+:root {
+  --blue: #003764;
+  --light-blue: #5EB3E4;
+  --light-gray: #E0E1E1;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #fff;
+  color: #000;
+}
+
+.main-nav {
+  background: var(--light-gray);
+  padding: 1rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  border-bottom: 2px solid var(--blue);
+}
+
+.main-nav .nav-link {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.page-header {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0 1rem 0.5rem;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(90px, 1fr));
+  gap: 0.25rem;
+  margin: 0 1rem 0.5rem;
+}
+
+.filter-row input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid #cfd7df;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.search-label {
+  font-weight: bold;
+  color: var(--blue);
+}
+
+.search-input {
+  min-width: 260px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #cfd7df;
+  border-radius: 6px;
+}
+
+.font-bold {
+  font-weight: bold;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.font-bold.secondary {
+  background: #e9f5ff;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+}
+
+.status-line {
+  text-align: center;
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+#grid {
+  margin: 0 1rem 1rem;
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+#grid .gridjs-wrapper {
+  overflow: auto;
+}
+
+#grid table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#grid th,
+#grid td {
+  padding: 0.16rem 0.28rem;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  border-bottom: 1px solid #e7ebf0;
+}
+
+#grid th {
+  background: #f7fbff;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+#grid td:nth-child(8),
+#grid td:nth-child(9),
+#grid td:nth-child(10),
+#grid td:nth-child(11) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+#grid .gridjs-head {
+  padding: 0;
+}
+
+#grid .gridjs-tbody td {
+  white-space: nowrap;
+}
+
+#grid .gridjs-pagination {
+  padding: 0.35rem 0.45rem;
+  background: #fff;
+}

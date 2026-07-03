@@ -112,40 +112,74 @@ h2
   transform: translateY(0);
 }
 
-/* AG Grid Container Styles */
-#aggrid-table-container 
-{
-  margin: 2rem 20px;
+/* Tabulator table container styles */
+#table-shell {
+  margin: 1rem 20px 1rem 20px;
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: auto;
+  border: 1px solid #d8dde6;
+  max-width: 100%;
 }
 
-/* Keep the row separators, but avoid the heavier column dividers */
-.ag-theme-alpine .ag-row {
-  border-bottom: 1px solid #d8dde6 !important;
-  box-shadow: inset 0 -1px 0 #d8dde6;
+#myTable {
+  width: 100%;
+  min-width: 980px;
+  min-height: 330px;
+  background: #fff;
 }
 
-.ag-theme-alpine .ag-row-odd {
-  background-color: #edf7fd !important;
+.tabulator {
+  font-size: 0.92rem;
+  border: 0;
+  width: 100%;
 }
 
-.ag-theme-alpine .ag-row-odd .ag-cell {
-  background-color: #edf7fd !important;
+.tabulator .tabulator-header {
+  background: #fff;
+  color: var(--blue);
+  border-bottom: 1px solid #d8dde6;
 }
 
-.ag-theme-alpine .ag-row-odd .ag-full-width-row {
-  background-color: #edf7fd !important;
+.tabulator .tabulator-header .tabulator-col {
+  background: #fff;
+  border-right: 1px solid #e7ebf0;
+  min-width: 80px;
 }
 
-.ag-theme-alpine .ag-header,
-.ag-theme-alpine .ag-row-even {
-  background-color: #fff;
+.tabulator .tabulator-header .tabulator-col-content {
+  padding: 0.16rem 0.28rem;
 }
 
-.ag-theme-alpine .ag-row-hover {
-  background-color: #f6fbff;
+.tabulator .tabulator-header-filter input {
+  height: 20px;
+  padding: 0 0.2rem;
+  font-size: 0.8rem;
+}
+
+.tabulator .tabulator-row {
+  min-height: 24px;
+}
+
+.tabulator .tabulator-row-even {
+  background: #edf7fd;
+}
+
+.tabulator .tabulator-row:hover {
+  background: #f6fbff;
+}
+
+.tabulator .tabulator-cell {
+  padding: 0.16rem 0.28rem;
+  border-right: 1px solid #e7ebf0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabulator .tabulator-footer {
+  background: #fff;
+  border-top: 1px solid #d8dde6;
 }
 
 /* Responsive Design */
@@ -167,9 +201,12 @@ h2
     border-radius: 0;
   }
 
-  #aggrid-table-container 
-  {
-    margin: 2rem 10px;
+  #table-shell {
+    margin: 1rem 8px;
+  }
+
+  #myTable {
+    min-width: 960px;
   }
 }
 
@@ -190,5 +227,5 @@ h2
   #aggrid-table-container 
   {
     margin: 2rem 5px;
-  }
+    height: clamp(600px, 70vh, 720px);
 }
