@@ -38,8 +38,9 @@
 - [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) / [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) / [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 - [Apache eCharts](https://echarts.apache.org/en/index.html)
 - [Plotly Javascript Library](https://plotly.com/javascript/) (optional)
-- [Leaflet](https://leafletjs.com/)
-- [AG Grid](https://www.ag-grid.com/javascript-data-grid/getting-started/)
+- [Leaflet](https://leafletjs.com/) and [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster)
+- [Tabulator](https://tabulator.info/) for compact interactive tables
+- [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) for client-side data caching and refresh
 - [Free Icons org](https://www.freeicons.org/)
 
 
@@ -79,7 +80,7 @@
 
 **Requirements:**
 - Node.js v18 or newer
-- Internet connection is required to fetch source data and call the KYTC API
+- Internet connection is required to fetch source data and call the KYTC API when you run the ETL pipeline
 
 1. **Clone the Repository**
    ```bash
@@ -92,16 +93,22 @@
    npm install
    ```
 
-3. **Run the ETL Pipeline**
-  - To fetch, process, enrich, and store road closure data, use:
-     ```bash
-     npm start
-     ```
-   - This will execute [`etl_data.js`](/etl_data.js) and generate a [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json) file containing the fully processed and enriched dataset.
+3. **Refresh or Generate the Dataset (optional)**
+   ```bash
+   npm start
+   ```
+   This runs [`etl_data.js`](./etl_data.js) and writes an updated dataset to [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json).
 
-**Notes: Data Retrieval, Storage, and Integration**
-- The current version will take quite some time to run since it processes one record per call.  To help with this, I setup a github action that runs each night so you should receive a working dataeet as part of the clone process.
-- The ETL pipeline reprocesses historic road closure data using the KYTC API, ensuring all records have the most up-to-date roadway attributes
+4. **Preview the Site Locally**
+   ```bash
+   python -m http.server 8000
+   ```
+   Then open <http://localhost:8000/> in your browser.
+
+**Notes:**
+- The repository already includes processed JSON files in the [`data/`](./data/) folder, so the site can be explored locally even if you do not run the ETL pipeline.
+- The ETL pipeline reprocesses historic road closure data using the KYTC API so the roadway attributes stay current.
+- The site is a static front-end experience, so a lightweight local server is sufficient for previewing the pages.
 
 ## Core Features
 
@@ -130,12 +137,14 @@
 - Consistent, modern CSS across all pages
 - Consistent navigation menu bar with hover effects
 - Launch page with icons, descriptions, and hover effects
-- Analysis by Count: Apache ECharts with count of closures
-- Analysis by Duration: Apache ECharts with total hours of closures
+- Analysis by Count: Apache ECharts with closure counts
+- Analysis by Duration: Apache ECharts with total closure hours
 - Map View: Interactive Leaflet map with marker clustering and detailed pop-ups
-- Table View: Interactive table using AG Grid with filtering and export options
-- PowerBI Dashboard: Embedded PowerBI using iframe.
-- About page with hover over information about myself and this project
+- Table View: Compact Tabulator tables with pagination, column filtering, CSV export, and a stable layout for narrower browser widths
+- Map + Table View: Row selection and multi-selection that update the visible map markers and show the current record count
+- Grid.js comparison page: Global search plus per-column filters for side-by-side testing
+- PowerBI Dashboard: Embedded PowerBI using iframe
+- About page with background information about the project and the author
 
 ## Under Development
 The following items are still being improved or are planned for future releases:
