@@ -140,7 +140,7 @@ async function enrichRow(row)
 async function main()
 {
   // 1. Fetch and parse CSV data
-  const csvUrl = 'https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv';
+  const csvUrl = 'https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-report_dataset.csv';
   console.log('Fetching CSV from:', csvUrl);
   const csvText = await fetchCSV(csvUrl);
   console.log('CSV fetched. Length:', csvText.length);

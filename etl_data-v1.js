@@ -29,7 +29,7 @@ import fs from 'fs';
 // const { parse } = require('csv-parse/sync');
 // const fs = require('fs');
 
-const csvUrl = 'https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv';
+const csvUrl = 'https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-report_dataset.csv';
 // Function to fetch the CSV and read as plain text
 async function fetchCSV(url)
 {
