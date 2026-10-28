@@ -18,21 +18,21 @@
 
 ### Project Outline:
 
-- This document started as a project outline for [Code:You](https://code-you.org/) but I have updating the document as a I complete work on the project.<br>
-- In addition to the GitHub Repo [report-ky-roadclosures](https://github.com/chrislambert-ky/report-ky-roadclosures), I've also setup a [GitHub Page](https://pages.github.com/) site called [report-ky-roadclosures](https://chrislambert-ky.github.io/report-ky-roadclosures/).  The data displayed on this site will update each night at 12:30am using [GitHub Actions](https://github.com/features/actions)<br>
+- This project combines the original Python analysis and ETL with the interactive web report. The live site remains a static [GitHub Pages](https://pages.github.com/) site and continues to update nightly through [GitHub Actions](https://github.com/features/actions).
 
 ## Introduction
 
-**Goal:**  Develop a responsive web application that visualizes historic road closure data sourced from the [Kentucky Transportation Cabinet](https://transportation.ky.gov/Pages/Home.aspx).  This will be accomplished by pulling road closure data hosted on GitHub, enhance the roadway attributes using a Kentucky Transportation Cabinet [Spatial API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs), and then produce an interactive, responsive, website that provides business intelligence capabilities.
+**Goal:** Build a responsive analysis project around historic road-closure data from the [Kentucky Transportation Cabinet](https://transportation.ky.gov/Pages/Home.aspx). A Python ETL cleans the annual source files and publishes CSV, Excel, and Parquet datasets. A Node.js ETL enriches the records through the KYTC [Spatial API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) for the interactive static website.
 
 **Objective:**
-  - Retrieve csv formatted road closure data from a github repo.
-  - Reprocess historic data with updated roadway attributes.
+  - Retrieve and clean yearly CSV road-closure data.
+  - Export a consistent report dataset and reprocess locations with current roadway attributes.
   - Develop user-friendly, interactive dashboard(s) to quantify closures.
   - Develop filtering for users to focus and explore closure data.
 
 **Tools and Technologies:** 
 - [Node.js](https://nodejs.org/en)
+- Python, pandas, and Jupyter
 - [GitHub API](https://docs.github.com/en/rest/using-the-rest-api)
 - [Geospatial API provided by KYTC](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs)
 - [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML) / [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) / [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
@@ -79,7 +79,8 @@
 ## Getting Started
 
 **Requirements:**
-- Node.js v18 or newer
+- Python 3.11 or newer
+- Node.js v20 or newer
 - Internet connection is required to fetch source data and call the KYTC API when you run the ETL pipeline
 
 1. **Clone the Repository**
@@ -90,16 +91,23 @@
 
 2. **Install Dependencies**
    ```bash
-   npm install
+   python -m pip install -r python/requirements.txt
+   npm ci
    ```
 
-3. **Refresh or Generate the Dataset (optional)**
+3. **Run the ETL tests**
    ```bash
-   npm start
+   python -m unittest discover -s python/tests
+   npm test
    ```
-   This runs [`etl_data.js`](./etl_data.js) and writes an updated dataset to [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json).
 
-4. **Preview the Site Locally**
+4. **Refresh or Generate the Datasets (optional)**
+   ```bash
+   npm run update-data
+   ```
+   This runs the Python source-data pipeline followed by the Node.js spatial enrichment. The report-ready CSV, Excel, and Parquet files are written to [`data-reportready/`](./data-reportready), and the site JSON is written to [`data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json).
+
+5. **Preview the Site Locally**
    ```bash
    python -m http.server 8000
    ```
@@ -107,13 +115,16 @@
 
 **Notes:**
 - The repository already includes processed JSON files in the [`data/`](./data/) folder, so the site can be explored locally even if you do not run the ETL pipeline.
-- The ETL pipeline reprocesses historic road closure data using the KYTC API so the roadway attributes stay current.
+- The standalone [`python/road_closure_analysis.ipynb`](./python/road_closure_analysis.ipynb) notebook analyzes the integrated report dataset; field definitions and timestamp handling are in [`python/data_dictionary.md`](./python/data_dictionary.md).
+- The original Python repository remains available for its raw/clean archives, legacy notebook, and Power BI files: [analysis-ky-roadclosures](https://github.com/chrislambert-ky/analysis-ky-roadclosures).
 - The site is a static front-end experience, so a lightweight local server is sufficient for previewing the pages.
 
 ## Core Features
 
 #### Back-End / Server-Side ETL & Data Processing
-- Fetch [CSV formatted data](https://raw.githubusercontent.com/chrislambert-ky/analysis-ky-roadclosures/refs/heads/main/data-reportready/kytc-closures-2021-2025-report_dataset.csv) from my Python based [Road Closure Analysis](https://github.com/chrislambert-ky/analysis-ky-roadclosures) GitHub repo.
+- Downloads annual CSV files directly from the KYTC source and combines them into a normalized report-ready dataset.
+- Publishes the report-ready dataset as CSV, Excel, and Parquet files in [`data-reportready/`](./data-reportready).
+- Reads the local Python output and enriches it with the KYTC Spatial API; the site ETL no longer depends on a second repository.
 - Parses source dataset to retain only unique fields
   - Latitude
   - Longitude
@@ -161,4 +172,3 @@ The following items are still being improved or are planned for future releases:
 - The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the [Code:You](https://code-you.org/) AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
 -- The [`etl_data_ai.js`](etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I used AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`etl_data_ai.js`](etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
 - I used GitHub Copilot again to help with the documentation of [`etl_data_ai.js`](etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
-

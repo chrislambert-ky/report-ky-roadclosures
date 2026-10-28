@@ -2,7 +2,7 @@ name: Road Closure ETL Update - Report Project
 
 on:
   schedule:
-    - cron: '30 5 * * *'  # 12:30am EST/EDT (America/New_York is UTC-5/UTC-4)
+    - cron: '30 5 * * *'  # 12:30am EST / 1:30am EDT
   workflow_dispatch:
 
 permissions:
@@ -17,15 +17,26 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install Python dependencies
+        run: python -m pip install -r python/requirements.txt
 
-      - name: Run ETL script
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build report-ready datasets
+        run: python python/etl_pipeline.py
+
+      - name: Enrich site dataset
         run: node etl_data.js
 
       - name: Configure git
@@ -33,8 +44,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Add all changed files
-        run: git add .
+      - name: Stage generated datasets
+        run: |
+          git add data-reportready/kytc-closures-report_dataset.csv
+          git add data-reportready/kytc-closures-report_dataset.xlsx
+          git add data-reportready/kytc-closures-report_dataset.parquet
+          git add data/data_v4_final_roadclosures.json
 
       - name: Commit changes
         run: git diff --cached --quiet || git commit -m "Automated nightly ETL update [skip ci]"

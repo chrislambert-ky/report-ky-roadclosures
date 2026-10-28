@@ -105,20 +105,15 @@
 <br>
 
 <p style="text-align:left;">
-This project, developed in 2024, focused on analyzing Kentucky road closure data using Python.
-This project started as a <a href="https://code-you.org/" target="_blank" rel="noopener noreferrer">Code:You</a> Python capstone project.
-My goal with the <a href="https://code-you.org/" target="_blank" rel="noopener noreferrer">Code:You</a> Web Development course was to develop a better front end for this project and data.
-I decided to use the tranformed data in the Python repo as my orignal data source but I've used a Node.js Javascript ETL process to further enhance the data and then of course using HTML/CSS/Javascript to develop a much better interface. This is where the JavaScript web development project is pulling its data.<br>
+The Python analysis and ETL are now part of this project. The nightly workflow downloads and cleans KYTC's annual source files, writes report-ready CSV, Excel, and Parquet datasets, then enriches the site data with the KYTC Spatial API. The public website remains a static GitHub Pages app.
 
 </p>
 
         <ul>
-            <li><strong>Data Ingestion:</strong> Ingests data from multiple CSV files containing annual road closure data, starting with 2021.</li>
-            <li><strong>Data Cleaning:</strong> Handles various inconsistencies with timestamps, carriage returns, and parsing latitude and longitude.</li>
-            <li><strong>Data Transformation:</strong> Transforms and merges each of the annual snapshots into a single, consistent, report-ready dataset.</li>
-            <li><strong>Reporting:</strong> Generates reports in Jupyter Notebooks and PowerBI to present the results.</li>
-            <li><strong>Documentation:</strong> Comprehensive documentation of the ETL processes and data analysis methodologies.</li>
-            <li><strong>Deployment:</strong> Recently developed a GitHub Action to automate the ETL process, maintaining the integrity and timeliness of the report-ready dataset.</li>
+            <li><strong>Analysis notebook:</strong> <a href="../python/road_closure_analysis.ipynb">Explore the migrated Python analysis</a>.</li>
+            <li><strong>Data dictionary:</strong> <a href="../python/data_dictionary.md">Review field definitions and timestamp handling</a>.</li>
+            <li><strong>Download data:</strong> <a href="../data-reportready/kytc-closures-report_dataset.csv">CSV</a> · <a href="../data-reportready/kytc-closures-report_dataset.xlsx">Excel</a> · <a href="../data-reportready/kytc-closures-report_dataset.parquet">Parquet</a>.</li>
+            <li><strong>Historical source project:</strong> <a href="https://github.com/chrislambert-ky/analysis-ky-roadclosures" target="_blank" rel="noopener noreferrer">The original Python repository</a> retains raw/clean archives, the legacy notebook, and Power BI deliverables.</li>
         </ul>
     </section>
 

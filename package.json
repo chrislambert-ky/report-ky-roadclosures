@@ -11,7 +11,8 @@
   "devDependencies": {},
   "scripts": {
     "start": "node etl_data.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "update-data": "python python/etl_pipeline.py && node etl_data.js",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
