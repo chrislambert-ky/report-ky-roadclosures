@@ -2,6 +2,21 @@
 
 **Hosted version:** [https://chrislambert-ky.github.io/report-ky-roadclosures/](https://chrislambert-ky.github.io/report-ky-roadclosures/)
 
+## Choose your path
+
+- **Just exploring the analysis?** Open the [hosted report](https://chrislambert-ky.github.io/report-ky-roadclosures/). No clone or setup is needed.
+- **Using the Python tools or notebook?** Start with the [Python workflow guide](./python/README.md).
+- **Developing the website or refreshing its data?** Follow the [web and data workflow guide](./docs/web-and-data-workflow.md).
+
+## Repository map
+
+- `python/` contains the Python ETL, analysis notebook, tests, and data dictionary.
+- `index.html`, `html/`, `css/`, `js/`, and `images/` make up the static website currently published from the repository root.
+- `etl_data.js` enriches the Python output for the website.
+- `data-reportready/` contains the CSV, Excel, and Parquet report datasets; `data/` contains JSON used by the website and earlier pipeline outputs.
+- `.github/workflows/etl_update.yml` runs the full data refresh nightly.
+- `docs_js/` contains reference examples and experiments, not the current website entry point.
+
 ### Personal Disclaimer:
 - _While I am an employee of the Kentucky Transportation Cabinet, this analysis of road closure data is not an official KYTC analysis.  This project exists for me to learn and grow my skills in web development (HTML, CSS, Javascript)._
 - _My background is in:_
@@ -76,48 +91,37 @@
 
 
 
-## Getting Started
+## Local development and data refresh
 
-**Requirements:**
-- Python 3.11 or newer
-- Node.js v20 or newer
-- Internet connection is required to fetch source data and call the KYTC API when you run the ETL pipeline
+### Preview the website
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/chrislambert-ky/report-ky-roadclosures.git
-   cd report-ky-roadclosures
-   ```
+The site is static and the generated JSON is already included, so you do not need to install Node.js or run the ETL just to browse it locally. From the repository root, run:
 
-2. **Install Dependencies**
-   ```bash
-   python -m pip install -r python/requirements.txt
-   npm ci
-   ```
+```bash
+python -m http.server 8000
+```
 
-3. **Run the ETL tests**
-   ```bash
-   python -m unittest discover -s python/tests
-   npm test
-   ```
+Then open <http://localhost:8000/>.
 
-4. **Refresh or Generate the Datasets (optional)**
-   ```bash
-   npm run update-data
-   ```
-   This runs the Python source-data pipeline followed by the Node.js spatial enrichment. The report-ready CSV, Excel, and Parquet files are written to [`data-reportready/`](./data-reportready), and the site JSON is written to [`data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json).
+### Run the Python workflow
 
-5. **Preview the Site Locally**
-   ```bash
-   python -m http.server 8000
-   ```
-   Then open <http://localhost:8000/> in your browser.
+See the [Python workflow guide](./python/README.md) for installing its dependencies, running the ETL or notebook, and finding the generated report datasets. This path does not require Node.js.
 
-**Notes:**
-- The repository already includes processed JSON files in the [`data/`](./data/) folder, so the site can be explored locally even if you do not run the ETL pipeline.
-- The standalone [`python/road_closure_analysis.ipynb`](./python/road_closure_analysis.ipynb) notebook analyzes the integrated report dataset; field definitions and timestamp handling are in [`python/data_dictionary.md`](./python/data_dictionary.md).
-- The original Python repository remains available for its raw/clean archives, legacy notebook, and Power BI files: [analysis-ky-roadclosures](https://github.com/chrislambert-ky/analysis-ky-roadclosures).
-- The site is a static front-end experience, so a lightweight local server is sufficient for previewing the pages.
+### Refresh all datasets
+
+This is the contributor path for regenerating both the downloadable report datasets and the website JSON. It requires Python 3.11 or newer, Node.js 20 or newer, and internet access to fetch source data and call the KYTC API.
+
+```bash
+python -m pip install -r python/requirements.txt
+npm ci
+python -m unittest discover -s python/tests
+npm test
+npm run update-data
+```
+
+The refresh runs the Python source-data pipeline followed by Node.js spatial enrichment. The report-ready CSV, Excel, and Parquet files are written to [`data-reportready/`](./data-reportready), and the site JSON is written to [`data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json). See the [web and data workflow guide](./docs/web-and-data-workflow.md) for details.
+
+The original Python repository remains available for its raw/clean archives, legacy notebook, and Power BI files: [analysis-ky-roadclosures](https://github.com/chrislambert-ky/analysis-ky-roadclosures).
 
 ## Core Features
 
@@ -159,9 +163,6 @@
 
 ## Under Development
 The following items are still being improved or are planned for future releases:
--- **Deploy [`etl_data_ai.js`](etl_data_ai.js)** for more efficient API calls.
-  - Batch processing (100 records per batch) to avoid API overload
-  - Error handling: API errors and missing data are logged in the output
 - Continue to enhance dashboard UI/UX and interactivity
   - Add more advanced filtering for apache echart graphs.
   - Add multiple graphs per page, aligning more closely with BI solutions.
@@ -169,6 +170,5 @@ The following items are still being improved or are planned for future releases:
   - Add pivot table functionality for table view users.
 
 ## AI Use Disclaimer:
-- The current [`etl_data.js`](/etl_data.js) script is my work.  After reading the [Code:You](https://code-you.org/) AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
--- The [`etl_data_ai.js`](etl_data_ai.js) script, which I will deploy after the capstone, reqired GitHub CoPilot.  I used AI quite a bit to troubleshoot API errors.  My issue occurred when I tried sending batches of records to the API.  I started by trying to feed the entire 10k records to the API but it kept locking up.  I even spoke with the API developer but he couldn't help me.  I was told that the API should be able to handle a batch of 10k records but it never worked.  So I needed Copilot Agentic mode to get through what is now the [`etl_data_ai.js`](etl_data_ai.js) script.  I have not found another way to develop it.  Even after it was developed, I asked different AI bots to optimize the code and they all failed.  Each one makes modifications that throw more errors.  It works in it's current form and I have no desire to change it.
-- I used GitHub Copilot again to help with the documentation of [`etl_data_ai.js`](etl_data_ai.js).  Since ETLs aren't something that people modify often, I will need as much documentation as possible for making updates when/if the API changes.  I first documented the script myself but then I prompted GitHub Copilot to "add comments so that others can better understand the ETL process and use this script as a learning tool."
+- The current [`etl_data.js`](./etl_data.js) script is my work.  After reading the [Code:You](https://code-you.org/) AI policy, I felt like I should revert back to that version to better represent what I've learned.  Lol... and when I say **my** work: I mean that I had to search for things, piece together examples, iterate through error messages, look through python code and try to translate functions into Javascript, and even ask questions of coworkers/developers.
+- The AI-assisted script is retained as [`js/etl_data_ai_copy.js`](./js/etl_data_ai_copy.js) for reference; the current update workflow runs [`etl_data.js`](./etl_data.js), not that copy. The retained script documents the API batch-processing experiments and the AI-assisted troubleshooting that helped resolve them.
