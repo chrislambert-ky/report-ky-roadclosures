@@ -15,7 +15,7 @@
 - `etl_data.js` enriches the Python output for the website.
 - `data-reportready/` contains the CSV, Excel, and Parquet report datasets; `data/` contains JSON used by the website and earlier pipeline outputs.
 - `.github/workflows/etl_update.yml` runs the full data refresh nightly.
-- `docs_js/` contains reference examples and experiments, not the current website entry point.
+- `docs_js/` contains reference examples and source snapshots, not the active website or ETL workflow.
 
 ### Personal Disclaimer:
 - _While I am an employee of the Kentucky Transportation Cabinet, this analysis of road closure data is not an official KYTC analysis.  This project exists for me to learn and grow my skills in web development (HTML, CSS, Javascript)._
@@ -25,7 +25,7 @@
   - BI Tools (Looker Studio, Tableau, PowerBI).
   - Python ETLs
 ### Data Disclaimer:
-- _There are many factors that contribute to road closures that are not disclosed in this dataset. This dataset is not a complete or comprehensive list of all road closures and/or damaged roadways.  These are only the reports that were verified by the Transportatioin Operatations Center in real-time and displayed on the GoKY website. As an employee of KYTC, I want to promote safety and mobility for everyone and I would encourage you to please utilize the following resources:_<br>
+- _There are many factors that contribute to road closures that are not disclosed in this dataset. This dataset is not a complete or comprehensive list of all road closures and/or damaged roadways. These are only the reports that were verified by the Transportation Operations Center in real time and displayed on the GoKY website. As an employee of KYTC, I want to promote safety and mobility for everyone and I encourage you to use the following resources:_<br>
 - **_"Know before you go" Real-Time Traveler Information can be found at [GoKY](https://goky.ky.gov)_**
 - **_KYTC also shares real-time data with [Waze](https://www.waze.com/en/live-map/)._**
 
@@ -37,13 +37,13 @@
 
 ## Introduction
 
-**Goal:** Build a responsive analysis project around historic road-closure data from the [Kentucky Transportation Cabinet](https://transportation.ky.gov/Pages/Home.aspx). A Python ETL cleans the annual source files and publishes CSV, Excel, and Parquet datasets. A Node.js ETL enriches the records through the KYTC [Spatial API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) for the interactive static website.
+**Goal:** Build a responsive analysis project around historic road-closure data from the [Kentucky Transportation Cabinet](https://transportation.ky.gov/Pages/Home.aspx). A Python ETL cleans the annual source files and publishes CSV, Excel, and Parquet datasets. A Node.js ETL enriches the records through the KYTC [Spatial API](https://kytc-api-v100-lts-qrntk7e3ra-uc.a.run.app/docs) for the interactive static website. The hosted report combines count and duration analysis in one dashboard.
 
 **Objective:**
   - Retrieve and clean yearly CSV road-closure data.
   - Export a consistent report dataset and reprocess locations with current roadway attributes.
-  - Develop user-friendly, interactive dashboard(s) to quantify closures.
-  - Develop filtering for users to focus and explore closure data.
+  - Provide an interactive dashboard to explore closure counts and duration by year, month, district, and county.
+  - Let users filter and compare data with linked time and geography controls.
 
 **Tools and Technologies:** 
 - [Node.js](https://nodejs.org/en)
@@ -63,19 +63,16 @@
 
 - **Complete (Rating: Easy)** Analyze data that is stored in arrays, objects, sets or maps and display information about it in your app.<br>
 **Demonstrated in:**
-  - [Analysis by Count](./html/analysis_by_count.html)
-  - [Analysis by Duration](./html/analysis_by_duration.html)
+  - [Analysis Dashboard](./html/analysis_dashboard.html)
   - [Map View](./html/analysis_by_map.html)
   - [Table View](./html/analysis_by_table.html)
 - **Complete (Rating:Easy)** Create a function that accepts two or more input parameters and returns a value that is calculated or determined by the inputs.  Basic math functions don’t count (e.g. addition, etc).<br>
 **Demonstrated in:**
   - [`etl_data.js`](./etl_data.js)
-  - [Analysis by Count](./html/analysis_by_count.html)
-  - [Analysis by Duration](./html/analysis_by_duration.html)
+  - [Analysis Dashboard](./html/analysis_dashboard.html)
 - **Complete (Rating: Easy/Intermediate)** Visualize data in a user friendly way. (e.g. graph, chart, etc).  This can include using libraries like ChartJS<br>
 **Demonstrated in:**
-  - [Analysis by Count](./html/analysis_by_count.html)
-  - [Analysis by Duration](./html/analysis_by_duration.html)
+  - [Analysis Dashboard](./html/analysis_dashboard.html)
   - [Map View](./html/analysis_by_map.html)
   - [Table View](./html/analysis_by_table.html)
 - **Complete (Intermediate)** Calculate and display data based on an external factor (ex: get the current date, and display how many days remaining until some event)<br>
@@ -145,15 +142,14 @@ The original Python repository remains available for its raw/clean archives, leg
   - Road Name
   - Milepoint
   - Snap Status
-- Output written to [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json) after each batch
+- Progress is written to a temporary file after each batch; the completed result replaces [`./data/data_v4_final_roadclosures.json`](./data/data_v4_final_roadclosures.json) when processing finishes.
 
 #### Web Design: Interactive Dashboards
 - Responsive site design using CSS Grid and Flexbox
 - Consistent, modern CSS across all pages
 - Consistent navigation menu bar with hover effects
 - Launch page with icons, descriptions, and hover effects
-- Analysis by Count: Apache ECharts with closure counts
-- Analysis by Duration: Apache ECharts with total closure hours
+- Analysis Dashboard: Apache ECharts by closure count or total duration
 - Map View: Interactive Leaflet map with marker clustering and detailed pop-ups
 - Table View: Compact Tabulator tables with pagination, column filtering, CSV export, and a stable layout for narrower browser widths
 - Map + Table View: Row selection and multi-selection that update the visible map markers and show the current record count
@@ -161,11 +157,15 @@ The original Python repository remains available for its raw/clean archives, leg
 - PowerBI Dashboard: Embedded PowerBI using iframe
 - About page with background information about the project and the author
 
+### Analysis Dashboard
+
+The [Analysis Dashboard](./html/analysis_dashboard.html) combines the former Count and Duration pages. Choose **Count of closures** or **Total duration (hours)**, then use the Year, Month, District, and County filters to focus the charts. Selecting a district limits the county list and county chart to that district; selecting a county also selects its district. Selecting a bar in any chart cross-filters the other charts.
+
+Chart options include showing or hiding values on the bars, ordering district and county bars by value or alphabetically, and choosing the top 10, 15, or 20 counties. The old [Count URL](./html/analysis_by_count.html) and [Duration URL](./html/analysis_by_duration.html) redirect to this dashboard with the corresponding measure selected.
+
 ## Under Development
 The following items are still being improved or are planned for future releases:
 - Continue to enhance dashboard UI/UX and interactivity
-  - Add more advanced filtering for apache echart graphs.
-  - Add multiple graphs per page, aligning more closely with BI solutions.
   - Add County and/or KYTC District polygons to map view.
   - Add pivot table functionality for table view users.
 

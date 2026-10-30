@@ -44,7 +44,9 @@ python -m unittest discover -s python/tests
 
 ## Explore the notebook
 
-Open [`road_closure_analysis.ipynb`](./road_closure_analysis.ipynb) in a Jupyter-enabled editor after building the report-ready dataset. Field definitions and timestamp handling are documented in [`data_dictionary.md`](./data_dictionary.md).
+Open [`road_closure_analysis.ipynb`](./road_closure_analysis.ipynb) in a Jupyter-enabled editor after building the report-ready dataset. The notebook has separate count and duration sections, plus county and point maps. It is a Python companion to—not the implementation of—the hosted [Analysis Dashboard](../html/analysis_dashboard.html), which combines both measures and links county selections to their KYTC district.
+
+Field definitions and timestamp handling are documented in [`data_dictionary.md`](./data_dictionary.md).
 
 The original Python project, with its raw/clean archives and Power BI materials, remains available at [analysis-ky-roadclosures](https://github.com/chrislambert-ky/analysis-ky-roadclosures).
 

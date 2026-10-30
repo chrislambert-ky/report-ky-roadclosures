@@ -2,8 +2,8 @@
 
 | Field Name       | Data Type | Description                                                                                       | Examples                   |
 |------------------|-----------|---------------------------------------------------------------------------------------------------|----------------------------|
-| District         | Integer   | KYTC divides the state into 12 geographic regions. Those areas start with District 1 in the far West and end with District 12 in the far East. | 1, 2, 3, etc.              |
-| County           | Object    | The name of the county where the event occurred. County names are all proper case.                | Fayette, Frankfort, Jefferson, etc. |
+| District         | Integer   | KYTC district associated with the event location. Kentucky has 12 districts, numbered from west to east. | 1, 2, 3, etc.              |
+| County           | String    | The name of the county where the event occurred. County names are proper case.                     | Fayette, Jefferson, etc. |
 | Route            | Object    | The route name associated with the incident.                                                     | KY-80, US-60, I-69        |
 | Road_Name        | Object    | The name of the road associated with the transportation records.                                  | DONALDSON CREEK RD, BRIDGE ST, I-69, I-69 NC |
 | Begin_MP         | Float     | The milepost where the event or condition begins on the road.                                     | 0.5, 10.2, 50.0, etc.    |
@@ -17,3 +17,7 @@
 | Duration_Hours   | Float     | The duration of the transportation event in hours. This duration is used for reporting.           | 2.5, 1.75, 0.5, etc.      |
 
 Timestamps without an explicit UTC offset are interpreted as Eastern local time. Timestamps with an offset are converted to the `America/New_York` timezone and then stored without a timezone marker for report compatibility. Durations are calculated after normalization.
+
+## Website geography fields
+
+The Node.js spatial enrichment adds `District_Number` and `County_Name` to the website dataset using the event coordinates. These are the fields used by the hosted dashboard. In the current enriched dataset, each named county maps to one KYTC district: selecting a district limits the available counties and county chart, and selecting a county also selects its district.

@@ -18,8 +18,7 @@
 <body>
     <nav class="main-nav">
         <a class="nav-link" href="../index.html">Home</a>
-        <a class="nav-link" href="analysis_by_count.html">Analysis by Count</a>
-        <a class="nav-link" href="analysis_by_duration.html">Analysis by Duration</a>
+        <a class="nav-link" href="analysis_dashboard.html">Analysis Dashboard</a>
     <a class="nav-link" href="analysis_by_maptable.html">Map + Table View</a>
     <a class="nav-link" href="analysis_by_table.html">Table View</a>
 
@@ -27,7 +26,7 @@
     </nav>
     <div>
     <h1>About This Project</h1>
-    <h2>This project provides an interactive report for analyzing road closures in Kentucky. It includes various visualizations and dashboards to help users understand closure patterns and durations.</h2>
+    <h2>This project provides an interactive report for exploring Kentucky road closures. Its Analysis Dashboard combines closure counts and total duration with linked time and geography filters.</h2>
     </div>
 
     <section>
@@ -38,7 +37,7 @@
             <li>I am <strong><em>not</em></strong> a professional software developer.</li>
             <li>This is my first attempt at web development.</li>
             <li>This site was developed as a Code:You web development project but the data is legitimate.</li>
-            <li>The next version of the Node.js ETL (etl_data_ai.js) script required heavy use of GitHub Copilot for troubleshooting so it will be waiting until after my Code:You capstone submission.</li>
+            <li>The active data refresh uses <code>python/etl_pipeline.py</code> followed by <code>etl_data.js</code>. An AI-assisted ETL copy is retained for reference but is not part of the current workflow.</li>
         </ul>
     </section>
 
@@ -71,11 +70,10 @@
     <section>
         <h2>Project: JavaScript Server-Side Scripting with Node.js</h2>
         <ol>
-            <li><strong>Extract:</strong> Download the latest CSV data from source GitHub repository.</li>
-            <li><strong>Transform:</strong> Parse the CSV and keep only the essential fields (latitude, longitude, comments, reported date, end date, duration).</li>
-            <li><strong>Enrich:</strong> For each record, call the KYTC Spatial API to add updated road attributes (district, county, milepoint, road name, route, etc.).</li>
-            <li><strong>Batch Processing:</strong> Process records in batches to avoid overloading the API and write results incrementally to a JSON file.</li>
-            <li><strong>Output & Logging:</strong> Save the final enriched dataset as <b>data_v4_final_roadclosures.json</b> and log ETL run details (record count, time, etc.) to a CSV log file.</li>
+            <li><strong>Prepare:</strong> The Python ETL downloads and normalizes KYTC source files, then writes the report-ready CSV, Excel, and Parquet datasets.</li>
+            <li><strong>Transform:</strong> The Node.js ETL reads the report-ready CSV, keeps the fields needed for analysis, and deduplicates events.</li>
+            <li><strong>Enrich:</strong> It processes events in batches of up to 100 and calls the KYTC Spatial API to add updated district, county, milepoint, road name, route, and snap information.</li>
+            <li><strong>Output:</strong> Batch progress is written to a temporary file before the completed dataset replaces <code>data/data_v4_final_roadclosures.json</code>. Record counts, API errors, and elapsed time are reported in the console.</li>
         </ol>
     </section>
 
@@ -84,10 +82,9 @@
         <ul>
             <li><strong>Responsive Design:</strong> All pages are mobile-friendly and use a consistent navigation bar and color scheme.</li>
             <li><strong>Home (index.html):</strong> Dashboard landing page with visual links to all analysis and info pages.</li>
-            <li><strong>Analysis by Count (analysis_by_count.html):</strong> Interactive bar chart (Apache ECharts) showing the number of road closures by year, with tooltips and dynamic charting.</li>
-            <li><strong>Analysis by Duration (analysis_by_duration.html):</strong> Interactive bar chart (Apache ECharts) showing total closure duration by year, with tooltips and dynamic charting.</li>
+            <li><strong><a href="analysis_dashboard.html">Analysis Dashboard</a>:</strong> Switch between closure count and total duration by year, month, district, and county. Filter by time and geography, select chart bars to cross-filter, and choose labels, ranking order, and the number of counties shown. District selection limits county results; county selection automatically selects its district.</li>
             <li><strong>Map View (analysis_by_map.html):</strong> Interactive Leaflet map with marker clustering, showing closure locations and popups with details for each closure.</li>
-            <li><strong>Table View (analysis_by_table.html):</strong> AG Grid table with filtering, sorting, and CSV download for both full and filtered data.</li>
+            <li><strong>Table View (analysis_by_table.html):</strong> Tabulator table with filtering, sorting, pagination, and CSV export.</li>
             <li><strong>About (about.html):</strong> Project background, methodology, and documentation for learning and transparency.</li>
         </ul>
     </section>
@@ -111,6 +108,7 @@ The Python analysis and ETL are now part of this project. The nightly workflow d
 
         <ul>
             <li><strong>Analysis notebook:</strong> <a href="../python/road_closure_analysis.ipynb">Explore the migrated Python analysis</a>.</li>
+            <li><strong>Python workflow:</strong> <a href="../python/README.md">Set up and run the Python ETL and notebook</a>.</li>
             <li><strong>Data dictionary:</strong> <a href="../python/data_dictionary.md">Review field definitions and timestamp handling</a>.</li>
             <li><strong>Download data:</strong> <a href="../data-reportready/kytc-closures-report_dataset.csv">CSV</a> · <a href="../data-reportready/kytc-closures-report_dataset.xlsx">Excel</a> · <a href="../data-reportready/kytc-closures-report_dataset.parquet">Parquet</a>.</li>
             <li><strong>Historical source project:</strong> <a href="https://github.com/chrislambert-ky/analysis-ky-roadclosures" target="_blank" rel="noopener noreferrer">The original Python repository</a> retains raw/clean archives, the legacy notebook, and Power BI deliverables.</li>

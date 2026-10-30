@@ -14,6 +14,12 @@ Open <http://localhost:8000/>. The repository includes the generated JSON used b
 
 The site is currently published from the repository root. Its pages use relative links to the root `html/`, `css/`, `js/`, `images/`, and `data/` paths; keep those paths aligned if the layout or Pages publishing configuration changes.
 
+## Use the Analysis Dashboard
+
+Open the [Analysis Dashboard](../html/analysis_dashboard.html) to view closure counts or total duration (hours) by year, month, district, and county. The right-side controls provide the measure selector, Year/Month/District/County filters, and chart options for bar labels, district/county ordering, and the number of counties shown.
+
+The geography controls are linked: selecting a district limits the county filter and county chart to that district. Selecting a county automatically selects its district. Selecting a bar in a chart also filters the other charts. The previous [Count](../html/analysis_by_count.html) and [Duration](../html/analysis_by_duration.html) URLs remain available as redirects and open the combined dashboard with the matching measure selected.
+
 ## Refresh the published data
 
 The complete refresh requires Python 3.11 or newer, Node.js 20 or newer, and internet access to the source files and KYTC Spatial API. From the repository root:

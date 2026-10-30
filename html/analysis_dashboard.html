@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Explore Kentucky road-closure counts and durations by year, month, district, and county.">
+    <title>Road Closure Analysis Dashboard</title>
+    <link rel="stylesheet" href="../css/apache-viz.css">
+    <link rel="stylesheet" href="../css/analysis-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+</head>
+<body>
+    <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-link" href="../index.html">Home</a>
+        <a class="nav-link active" href="analysis_dashboard.html" aria-current="page">Analysis Dashboard</a>
+        <a class="nav-link" href="analysis_by_maptable.html">Map + Table View</a>
+        <a class="nav-link" href="analysis_by_table.html">Table View</a>
+        <a class="nav-link" href="about.html">About</a>
+    </nav>
+
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">KENTUCKY ROAD CLOSURES</p>
+            <h1>Analysis Dashboard</h1>
+            <p class="dashboard-description">Explore closure patterns over time and across Kentucky districts and counties.</p>
+        </div>
+        <p class="refresh-note">Data refreshes daily</p>
+    </header>
+
+    <main class="dashboard-layout">
+        <section class="dashboard-content" aria-label="Road closure visualizations">
+            <div class="summary-cards" aria-live="polite">
+                <article class="summary-card">
+                    <span class="summary-label">Closures in selection</span>
+                    <strong id="closureTotal">—</strong>
+                </article>
+                <article class="summary-card">
+                    <span class="summary-label">Duration in selection</span>
+                    <strong id="durationTotal">—</strong>
+                </article>
+                <p id="selectionSummary" class="selection-summary">Loading report data...</p>
+            </div>
+
+            <div class="visualization-grid">
+                <article class="visual-card">
+                    <div class="visual-card-heading">
+                        <div>
+                            <p class="chart-kicker">TIME</p>
+                            <h2 id="yearChartTitle">Closure Count by Year</h2>
+                        </div>
+                        <span class="chart-hint">Select a bar to filter</span>
+                    </div>
+                    <div id="yearChart" class="chart" role="img" aria-label="Road closures by year"></div>
+                </article>
+
+                <article class="visual-card">
+                    <div class="visual-card-heading">
+                        <div>
+                            <p class="chart-kicker">SEASONALITY</p>
+                            <h2 id="monthChartTitle">Closure Count by Month</h2>
+                        </div>
+                        <span class="chart-hint">Select a bar to filter</span>
+                    </div>
+                    <div id="monthChart" class="chart" role="img" aria-label="Road closures by month"></div>
+                </article>
+
+                <article class="visual-card">
+                    <div class="visual-card-heading">
+                        <div>
+                            <p class="chart-kicker">GEOGRAPHY</p>
+                            <h2 id="districtChartTitle">Closure Count by District</h2>
+                        </div>
+                        <span class="chart-hint">Select a bar to filter</span>
+                    </div>
+                    <div id="districtChart" class="chart" role="img" aria-label="Road closures by district"></div>
+                </article>
+
+                <article class="visual-card">
+                    <div class="visual-card-heading">
+                        <div>
+                            <p class="chart-kicker">GEOGRAPHY</p>
+                            <h2 id="countyChartTitle">Closure Count by County</h2>
+                        </div>
+                        <span class="chart-hint">Select a bar to filter</span>
+                    </div>
+                    <div id="countyChart" class="chart" role="img" aria-label="Road closures by county"></div>
+                </article>
+            </div>
+        </section>
+
+        <aside class="control-panel" aria-label="Dashboard controls">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">REPORT CONTROLS</p>
+                    <h2>Customize view</h2>
+                </div>
+                <button id="resetDashboard" class="reset-button" type="button">Reset</button>
+            </div>
+
+            <fieldset class="control-group measure-control">
+                <legend>Measure</legend>
+                <label for="measureSelect">Analyze by</label>
+                <select id="measureSelect">
+                    <option value="count">Count of closures</option>
+                    <option value="duration">Total duration (hours)</option>
+                </select>
+            </fieldset>
+
+            <fieldset class="control-group">
+                <legend>Filters</legend>
+                <label for="yearFilter">Year</label>
+                <select id="yearFilter"><option value="">All years</option></select>
+
+                <label for="monthFilter">Month</label>
+                <select id="monthFilter"><option value="">All months</option></select>
+
+                <label for="districtFilter">District</label>
+                <select id="districtFilter"><option value="">All districts</option></select>
+
+                <label for="countyFilter">County</label>
+                <select id="countyFilter"><option value="">All counties</option></select>
+            </fieldset>
+
+            <fieldset class="control-group chart-options">
+                <legend>Chart options</legend>
+                <label for="countyLimit">Counties shown</label>
+                <select id="countyLimit">
+                    <option value="10">Top 10</option>
+                    <option value="15" selected>Top 15</option>
+                    <option value="20">Top 20</option>
+                </select>
+
+                <label for="sortOrder">District and county order</label>
+                <select id="sortOrder">
+                    <option value="value">Largest value first</option>
+                    <option value="name">Alphabetical</option>
+                </select>
+
+                <label class="checkbox-control" for="showLabels">
+                    <input id="showLabels" type="checkbox" checked>
+                    Show values on bars
+                </label>
+            </fieldset>
+
+            <p class="interaction-note">Selecting a district limits the county list and chart to its counties. Selecting a county also selects its district. You can also select a bar in any chart to filter the other visualizations.</p>
+        </aside>
+    </main>
+
+    <footer class="dashboard-footer">
+        <span id="dataStatus" role="status">Loading data...</span>
+        <span>For informational purposes only; not an official KYTC analysis.</span>
+    </footer>
+
+    <script src="../js/idb_data_loader.js"></script>
+    <script src="../js/analysis_dashboard.js"></script>
+</body>
+</html>
