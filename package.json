@@ -1,14 +1,13 @@
 {
   "type": "module",
   "dependencies": {
-    "csv-parse": "^5.6.0",
-    "node-fetch": "^2.7.0"
+    "csv-parse": "^7.0.3",
+    "node-fetch": "^3.3.2"
   },
   "name": "report-ky-roadclosures",
   "version": "1.0.0",
   "description": "This document started as a project outline but I'm updating the document as a I complete work on the project.",
   "main": "etl_data.js",
-  "devDependencies": {},
   "scripts": {
     "start": "node etl_data.js",
     "update-data": "python python/etl_pipeline.py && node etl_data.js",
